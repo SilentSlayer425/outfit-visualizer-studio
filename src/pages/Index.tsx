@@ -1,6 +1,7 @@
 import { useState, useCallback } from 'react';
 import { motion } from 'framer-motion';
 import { Plus } from 'lucide-react';
+import { ResizablePanelGroup, ResizablePanel, ResizableHandle } from '@/components/ui/resizable';
 import { Button } from '@/components/ui/button';
 import { useCloset } from '@/hooks/useCloset';
 import { AppNav } from '@/components/AppNav';
@@ -97,26 +98,33 @@ export default function Index() {
         )}
 
         {tab === 'builder' && (
-          <div className="grid gap-6 lg:grid-cols-[1fr_280px]">
-            <OutfitCanvas
-              outfitItems={outfitItems}
-              getItemById={getItemById}
-              onUpdateItem={updateOutfitItem}
-              onRemoveItem={removeOutfitItem}
-              onSave={handleSaveOutfit}
-            />
-            <div>
-              <h3 className="font-heading font-semibold text-foreground mb-3">Add from closet</h3>
-              <ClothingGrid
-                items={items}
-                activeCategory={activeCategory}
-                onCategoryChange={setActiveCategory}
-                onRemove={removeItem}
-                onSelect={addToOutfit}
-                selectable
-              />
-            </div>
-          </div>
+          <ResizablePanelGroup direction="horizontal" className="min-h-[500px] rounded-2xl border border-border">
+            <ResizablePanel defaultSize={70} minSize={40}>
+              <div className="h-full p-4">
+                <OutfitCanvas
+                  outfitItems={outfitItems}
+                  getItemById={getItemById}
+                  onUpdateItem={updateOutfitItem}
+                  onRemoveItem={removeOutfitItem}
+                  onSave={handleSaveOutfit}
+                />
+              </div>
+            </ResizablePanel>
+            <ResizableHandle withHandle />
+            <ResizablePanel defaultSize={30} minSize={20}>
+              <div className="h-full p-4 overflow-y-auto">
+                <h3 className="font-heading font-semibold text-foreground mb-3">Add from closet</h3>
+                <ClothingGrid
+                  items={items}
+                  activeCategory={activeCategory}
+                  onCategoryChange={setActiveCategory}
+                  onRemove={removeItem}
+                  onSelect={addToOutfit}
+                  selectable
+                />
+              </div>
+            </ResizablePanel>
+          </ResizablePanelGroup>
         )}
 
         {tab === 'outfits' && (
