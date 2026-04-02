@@ -1,10 +1,11 @@
 import { useState, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { X, Upload, AlertTriangle } from 'lucide-react';
+import { X, Upload, AlertTriangle, Loader2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Alert, AlertDescription } from '@/components/ui/alert';
+import heic2any from 'heic2any';
 import type { ClothingCategory } from '@/types/closet';
 import { CATEGORY_LABELS, CATEGORY_ORDER } from '@/types/closet';
 
