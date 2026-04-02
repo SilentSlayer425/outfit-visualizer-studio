@@ -9,7 +9,7 @@
 // ── Google OAuth ──────────────────────────────────────
 // Get your Client ID from: https://console.cloud.google.com/apis/credentials
 // Set this to your OAuth 2.0 Client ID (Web application type)
-export const GOOGLE_CLIENT_ID = '98273814331-4939i1fh02uukbd6o0cud73evqftht5m.apps.googleusercontent.com';
+export const GOOGLE_CLIENT_ID = '98273814331-4lk1ijffj8juno7d4fdclh17rmjon8uh.apps.googleusercontent.com';
 
 // Google Drive folder name where closet data is stored
 // Change this to use a different folder name in the user's Drive
