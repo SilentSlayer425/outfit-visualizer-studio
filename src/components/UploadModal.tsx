@@ -1,11 +1,21 @@
 import { useState, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { X, Upload, Camera } from 'lucide-react';
+import { X, Upload, AlertTriangle } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Alert, AlertDescription } from '@/components/ui/alert';
 import type { ClothingCategory } from '@/types/closet';
 import { CATEGORY_LABELS, CATEGORY_ORDER } from '@/types/closet';
+
+// Supported image MIME types — add more here if needed
+const SUPPORTED_TYPES = new Set([
+  'image/jpeg', 'image/png', 'image/webp', 'image/gif', 'image/bmp',
+  'image/svg+xml', 'image/avif', 'image/tiff',
+]);
+
+// Extensions that browsers can't decode (HEIC/HEIF from iPhones, etc.)
+const UNSUPPORTED_NAMES = ['.heic', '.heif'];
 
 interface UploadModalProps {
   open: boolean;
@@ -18,12 +28,32 @@ export function UploadModal({ open, onClose, onUpload }: UploadModalProps) {
   const [category, setCategory] = useState<ClothingCategory>('tops');
   const [imageData, setImageData] = useState<string | null>(null);
   const [dragOver, setDragOver] = useState(false);
+  const [fileError, setFileError] = useState<string | null>(null);
   const fileRef = useRef<HTMLInputElement>(null);
 
   const handleFile = (file: File) => {
-    if (!file.type.startsWith('image/')) return;
+    setFileError(null);
+    const ext = file.name.toLowerCase();
+
+    // Check for known unsupported extensions (HEIC/HEIF)
+    if (UNSUPPORTED_NAMES.some(u => ext.endsWith(u))) {
+      setFileError(
+        `${file.name.split('.').pop()?.toUpperCase()} files are not supported by browsers. Please convert to JPG or PNG first (e.g. using your phone's share/export or an online converter).`
+      );
+      return;
+    }
+
+    // Check MIME type
+    if (!file.type.startsWith('image/') && !SUPPORTED_TYPES.has(file.type)) {
+      setFileError(
+        `"${file.type || 'unknown'}" is not a supported image format. Supported: JPG, PNG, WebP, GIF, BMP, SVG, AVIF, TIFF.`
+      );
+      return;
+    }
+
     const reader = new FileReader();
     reader.onload = (e) => setImageData(e.target?.result as string);
+    reader.onerror = () => setFileError('Failed to read the file. Please try again.');
     reader.readAsDataURL(file);
   };
 
@@ -40,6 +70,7 @@ export function UploadModal({ open, onClose, onUpload }: UploadModalProps) {
     setName('');
     setCategory('tops');
     setImageData(null);
+    setFileError(null);
     onClose();
   };
 
@@ -47,6 +78,7 @@ export function UploadModal({ open, onClose, onUpload }: UploadModalProps) {
     setName('');
     setCategory('tops');
     setImageData(null);
+    setFileError(null);
     onClose();
   };
 
@@ -73,7 +105,15 @@ export function UploadModal({ open, onClose, onUpload }: UploadModalProps) {
               </button>
             </div>
 
-            {/* Drop zone */}
+            {/* Unsupported format alert */}
+            {fileError && (
+              <Alert variant="destructive" className="mb-4 rounded-xl">
+                <AlertTriangle className="h-4 w-4" />
+                <AlertDescription className="text-sm">{fileError}</AlertDescription>
+              </Alert>
+            )}
+
+            {/* Drop zone — accepts common image formats */}
             <div
               className={`relative mb-4 rounded-xl border-2 border-dashed transition-colors cursor-pointer overflow-hidden ${
                 dragOver ? 'border-primary bg-primary/5' : 'border-border hover:border-primary/50'
@@ -89,12 +129,13 @@ export function UploadModal({ open, onClose, onUpload }: UploadModalProps) {
                 <div className="flex flex-col items-center justify-center h-full gap-2 text-muted-foreground">
                   <Upload className="w-8 h-8" />
                   <span className="text-sm font-medium">Drop a photo or tap to browse</span>
+                  <span className="text-xs text-muted-foreground/70">JPG, PNG, WebP, GIF, BMP, AVIF, TIFF</span>
                 </div>
               )}
               <input
                 ref={fileRef}
                 type="file"
-                accept="image/*"
+                accept="image/jpeg,image/png,image/webp,image/gif,image/bmp,image/svg+xml,image/avif,image/tiff"
                 className="hidden"
                 onChange={(e) => e.target.files?.[0] && handleFile(e.target.files[0])}
               />
