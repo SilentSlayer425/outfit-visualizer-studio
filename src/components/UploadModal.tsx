@@ -13,10 +13,11 @@ import { CATEGORY_LABELS, CATEGORY_ORDER } from '@/types/closet';
 const SUPPORTED_TYPES = new Set([
   'image/jpeg', 'image/png', 'image/webp', 'image/gif', 'image/bmp',
   'image/svg+xml', 'image/avif', 'image/tiff',
+  'image/heic', 'image/heif',
 ]);
 
-// Extensions that browsers can't decode (HEIC/HEIF from iPhones, etc.)
-const UNSUPPORTED_NAMES = ['.heic', '.heif'];
+// Extensions that need client-side conversion via heic2any
+const HEIC_EXTENSIONS = ['.heic', '.heif'];
 
 interface UploadModalProps {
   open: boolean;
