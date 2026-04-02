@@ -5,7 +5,9 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Alert, AlertDescription } from '@/components/ui/alert';
-import heic2any from 'heic2any';
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+import heic2anyModule from 'heic2any';
+const heic2any = (heic2anyModule as any).default || heic2anyModule;
 import type { ClothingCategory } from '@/types/closet';
 import { CATEGORY_LABELS, CATEGORY_ORDER } from '@/types/closet';
 
