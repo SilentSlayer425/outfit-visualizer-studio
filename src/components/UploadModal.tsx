@@ -5,72 +5,20 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Alert, AlertDescription } from '@/components/ui/alert';
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-import heic2anyModule from 'heic2any';
-const heic2any = (heic2anyModule as any).default || heic2anyModule;
 import type { ClothingCategory } from '@/types/closet';
 import { CATEGORY_LABELS, CATEGORY_ORDER } from '@/types/closet';
-
-// Supported image MIME types — add more here if needed
-const SUPPORTED_TYPES = new Set([
-  'image/jpeg', 'image/png', 'image/webp', 'image/gif', 'image/bmp',
-  'image/svg+xml', 'image/avif', 'image/tiff',
-  'image/heic', 'image/heif',
-]);
-
-// Extensions that need client-side conversion via heic2any
-const HEIC_EXTENSIONS = ['.heic', '.heif'];
+import {
+  isHeicLike,
+  isSupportedImage,
+  normalizeImageFile,
+  SUPPORTED_IMAGE_FORMAT_LABEL,
+} from '@/lib/image-processing';
 
 interface UploadModalProps {
   open: boolean;
   onClose: () => void;
   onUpload: (data: { name: string; category: ClothingCategory; imageData: string }) => void;
 }
-
-const readBlobAsDataUrl = (blob: Blob) =>
-  new Promise<string>((resolve, reject) => {
-    const reader = new FileReader();
-    reader.onload = (e) => resolve(e.target?.result as string);
-    reader.onerror = () => reject(new Error('Failed to read converted image.'));
-    reader.readAsDataURL(blob);
-  });
-
-// Compress / resize an image data-URL so it doesn't blow up localStorage
-// Max dimension: 1200px — change to allow larger/smaller stored images
-// Quality: 0.85 — lower = smaller file, worse quality
-const MAX_IMG_DIM = 1200;
-const IMG_QUALITY = 0.85;
-
-const compressImage = (dataUrl: string): Promise<string> =>
-  new Promise((resolve) => {
-    const img = new Image();
-    img.onload = () => {
-      let { width, height } = img;
-      if (width > MAX_IMG_DIM || height > MAX_IMG_DIM) {
-        const ratio = Math.min(MAX_IMG_DIM / width, MAX_IMG_DIM / height);
-        width = Math.round(width * ratio);
-        height = Math.round(height * ratio);
-      }
-      const canvas = document.createElement('canvas');
-      canvas.width = width;
-      canvas.height = height;
-      const ctx = canvas.getContext('2d')!;
-      ctx.drawImage(img, 0, 0, width, height);
-      resolve(canvas.toDataURL('image/jpeg', IMG_QUALITY));
-    };
-    img.onerror = () => resolve(dataUrl); // fallback to original
-    img.src = dataUrl;
-  });
-
-const convertHeicFile = async (file: File) => {
-  try {
-    const { heicTo } = await import('heic-to/csp');
-    return await heicTo({ blob: file, type: 'image/jpeg', quality: 0.9 });
-  } catch {
-    const fallbackBlob = await heic2any({ blob: file, toType: 'image/jpeg', quality: 0.9 });
-    return Array.isArray(fallbackBlob) ? fallbackBlob[0] : fallbackBlob;
-  }
-};
 
 export function UploadModal({ open, onClose, onUpload }: UploadModalProps) {
   const [name, setName] = useState('');
@@ -83,37 +31,27 @@ export function UploadModal({ open, onClose, onUpload }: UploadModalProps) {
 
   const handleFile = async (file: File) => {
     setFileError(null);
-    const ext = file.name.toLowerCase();
+    setConverting(true);
 
-    // Convert HEIC/HEIF to JPEG using heic2any
-    if (HEIC_EXTENSIONS.some(u => ext.endsWith(u)) || file.type === 'image/heic' || file.type === 'image/heif') {
-      setConverting(true);
-      try {
-        const resultBlob = await convertHeicFile(file);
-        const resultData = await readBlobAsDataUrl(resultBlob);
-        setImageData(await compressImage(resultData));
-        setConverting(false);
-      } catch {
-        setFileError('Failed to convert HEIC/HEIF file. Please try converting it manually to JPG.');
-        setConverting(false);
-      }
+    if (!isSupportedImage(file)) {
+      setFileError(`"${file.type || 'unknown'}" is not a supported image format. Supported: ${SUPPORTED_IMAGE_FORMAT_LABEL}.`);
+      setConverting(false);
       return;
     }
 
-    // Check MIME type
-    if (!file.type.startsWith('image/') && !SUPPORTED_TYPES.has(file.type)) {
+    try {
+      const normalizedImage = await normalizeImageFile(file);
+      setImageData(normalizedImage);
+    } catch (error) {
+      console.error('Image processing failed:', error);
       setFileError(
-        `"${file.type || 'unknown'}" is not a supported image format. Supported: JPG, PNG, WebP, GIF, BMP, SVG, AVIF, TIFF, HEIC/HEIF.`
+        isHeicLike(file)
+          ? 'Failed to convert HEIC/HEIF file. Please try another image or convert it manually to JPG.'
+          : 'Failed to process the selected image. Please try another photo.'
       );
-      return;
+    } finally {
+      setConverting(false);
     }
-
-    const reader = new FileReader();
-    reader.onload = async (e) => {
-      const raw = e.target?.result as string;
-      setImageData(await compressImage(raw));
-    };
-    reader.readAsDataURL(file);
   };
 
   const handleDrop = (e: React.DragEvent) => {
@@ -138,6 +76,7 @@ export function UploadModal({ open, onClose, onUpload }: UploadModalProps) {
     setCategory('tops');
     setImageData(null);
     setFileError(null);
+    setConverting(false);
     onClose();
   };
 
@@ -157,14 +96,13 @@ export function UploadModal({ open, onClose, onUpload }: UploadModalProps) {
             animate={{ scale: 1, opacity: 1 }}
             exit={{ scale: 0.95, opacity: 0 }}
           >
-            <div className="flex items-center justify-between mb-5">
+            <div className="mb-5 flex items-center justify-between">
               <h2 className="text-xl font-heading font-semibold text-foreground">Add to Closet</h2>
-              <button onClick={reset} className="p-1 rounded-full hover:bg-muted transition-colors">
-                <X className="w-5 h-5 text-muted-foreground" />
+              <button onClick={reset} className="rounded-full p-1 transition-colors hover:bg-muted">
+                <X className="h-5 w-5 text-muted-foreground" />
               </button>
             </div>
 
-            {/* Unsupported format alert */}
             {fileError && (
               <Alert variant="destructive" className="mb-4 rounded-xl">
                 <AlertTriangle className="h-4 w-4" />
@@ -172,28 +110,31 @@ export function UploadModal({ open, onClose, onUpload }: UploadModalProps) {
               </Alert>
             )}
 
-            {/* Drop zone — accepts common image formats + HEIC/HEIF (auto-converted) */}
             <div
-              className={`relative mb-4 rounded-xl border-2 border-dashed transition-colors cursor-pointer overflow-hidden ${
+              className={`relative mb-4 cursor-pointer overflow-hidden rounded-xl border-2 border-dashed transition-colors ${
                 dragOver ? 'border-primary bg-primary/5' : 'border-border hover:border-primary/50'
               } ${imageData ? 'h-48' : 'h-36'}`}
-              onDragOver={(e) => { e.preventDefault(); setDragOver(true); }}
+              onDragOver={(e) => {
+                e.preventDefault();
+                setDragOver(true);
+              }}
               onDragLeave={() => setDragOver(false)}
               onDrop={handleDrop}
               onClick={() => fileRef.current?.click()}
             >
               {converting ? (
-                <div className="flex flex-col items-center justify-center h-full gap-2 text-muted-foreground">
-                  <Loader2 className="w-8 h-8 animate-spin text-primary" />
-                  <span className="text-sm font-medium">Converting HEIC…</span>
+                <div className="flex h-full flex-col items-center justify-center gap-2 text-muted-foreground">
+                  <Loader2 className="h-8 w-8 animate-spin text-primary" />
+                  <span className="text-sm font-medium">{imageData ? 'Re-processing image…' : 'Processing image…'}</span>
+                  <span className="text-xs text-muted-foreground/70">High-res photos are resized to about 12MP and stripped of metadata.</span>
                 </div>
               ) : imageData ? (
-                <img src={imageData} alt="Preview" className="w-full h-full object-contain" />
+                <img src={imageData} alt="Preview" className="h-full w-full object-contain" />
               ) : (
-                <div className="flex flex-col items-center justify-center h-full gap-2 text-muted-foreground">
-                  <Upload className="w-8 h-8" />
+                <div className="flex h-full flex-col items-center justify-center gap-2 text-muted-foreground">
+                  <Upload className="h-8 w-8" />
                   <span className="text-sm font-medium">Drop a photo or tap to browse</span>
-                  <span className="text-xs text-muted-foreground/70">JPG, PNG, WebP, GIF, HEIC/HEIF, BMP, AVIF, TIFF</span>
+                  <span className="text-xs text-muted-foreground/70">Supported: {SUPPORTED_IMAGE_FORMAT_LABEL}</span>
                 </div>
               )}
               <input
@@ -226,7 +167,7 @@ export function UploadModal({ open, onClose, onUpload }: UploadModalProps) {
               </Select>
               <Button
                 onClick={handleSubmit}
-                disabled={!imageData || !name.trim()}
+                disabled={!imageData || !name.trim() || converting}
                 className="w-full rounded-xl font-semibold"
               >
                 Add Item

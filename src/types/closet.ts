@@ -12,7 +12,7 @@ export interface ClothingItem {
   id: string;
   name: string;
   category: ClothingCategory;
-  imageData: string; // base64
+  imageData: string; // optimized image data URL (metadata stripped during processing)
   color?: string;
   createdAt: number;
 }

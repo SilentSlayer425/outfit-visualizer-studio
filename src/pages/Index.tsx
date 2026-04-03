@@ -1,9 +1,9 @@
 /**
  * Main App Page
- * 
+ *
  * Three tabs: My Closet, Build Outfit, Saved Outfits.
  * Includes Google Drive sync controls and smooth tab transition animations.
- * 
+ *
  * Customization:
  *  - Tab animation speed: change PAGE_TRANSITION_DURATION in src/config.ts
  *  - Max content width: change max-w-4xl below
@@ -12,7 +12,7 @@
  */
 import { useState, useCallback, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Plus, Cloud, CloudOff, LogOut } from 'lucide-react';
+import { Plus, Cloud, CloudOff } from 'lucide-react';
 import { ResizablePanelGroup, ResizablePanel, ResizableHandle } from '@/components/ui/resizable';
 import { Button } from '@/components/ui/button';
 import { useCloset } from '@/hooks/useCloset';
@@ -28,7 +28,6 @@ import type { GoogleUser } from '@/hooks/useGoogleAuth';
 
 type Tab = 'closet' | 'builder' | 'outfits';
 
-// Page transition animation variants
 const pageVariants = {
   initial: { opacity: 0, x: 20 },
   animate: { opacity: 1, x: 0 },
@@ -41,45 +40,45 @@ interface IndexProps {
 }
 
 export default function Index({ user, onSignOut }: IndexProps) {
-  const { items, outfits, addItem, removeItem, getItemsByCategory, saveOutfit, removeOutfit, getItemById, replaceAll } = useCloset();
+  const { items, outfits, ready, addItem, removeItem, saveOutfit, removeOutfit, getItemById, replaceAll } = useCloset();
   const { saveToDrive, loadFromDrive, syncing, lastSync } = useGoogleDrive(user.accessToken);
   const [tab, setTab] = useState<Tab>('closet');
   const [uploadOpen, setUploadOpen] = useState(false);
   const [activeCategory, setActiveCategory] = useState<ClothingCategory | 'all'>('all');
-
-  // Outfit builder state
   const [outfitItems, setOutfitItems] = useState<OutfitItem[]>([]);
 
-  // Load from Drive on first mount
   useEffect(() => {
-    loadFromDrive().then(data => {
+    if (!ready) return;
+
+    loadFromDrive().then((data) => {
       if (data && (data.items?.length || data.outfits?.length)) {
         replaceAll(data.items || [], data.outfits || []);
       }
     });
-  }, []); // eslint-disable-line react-hooks/exhaustive-deps
+  }, [loadFromDrive, ready, replaceAll]);
 
-  // Auto-save to Drive when data changes (debounced)
   useEffect(() => {
+    if (!ready) return;
+
     const timer = setTimeout(() => {
       if (items.length > 0 || outfits.length > 0) {
         saveToDrive({ items, outfits });
       }
-    }, 2000); // 2 second debounce — increase for less frequent saves
+    }, 2000);
+
     return () => clearTimeout(timer);
-  }, [items, outfits, saveToDrive]);
+  }, [items, outfits, saveToDrive, ready]);
 
   const handleUpload = useCallback((data: { name: string; category: ClothingCategory; imageData: string }) => {
     addItem(data);
   }, [addItem]);
 
   const addToOutfit = useCallback((item: ClothingItem) => {
-    setOutfitItems(prev => [
+    setOutfitItems((prev) => [
       ...prev,
       {
         clothingId: item.id,
         category: item.category,
-        // Smart placement: position based on clothing category
         x: CATEGORY_X_DEFAULTS[item.category] ?? 0,
         y: CATEGORY_Y_DEFAULTS[item.category] ?? 0,
         scale: 1,
@@ -89,11 +88,11 @@ export default function Index({ user, onSignOut }: IndexProps) {
   }, []);
 
   const updateOutfitItem = useCallback((index: number, updates: Partial<OutfitItem>) => {
-    setOutfitItems(prev => prev.map((oi, i) => i === index ? { ...oi, ...updates } : oi));
+    setOutfitItems((prev) => prev.map((oi, i) => (i === index ? { ...oi, ...updates } : oi)));
   }, []);
 
   const removeOutfitItem = useCallback((index: number) => {
-    setOutfitItems(prev => prev.filter((_, i) => i !== index));
+    setOutfitItems((prev) => prev.filter((_, i) => i !== index));
   }, []);
 
   const handleSaveOutfit = useCallback((name: string) => {
@@ -103,9 +102,8 @@ export default function Index({ user, onSignOut }: IndexProps) {
 
   return (
     <div className="min-h-screen pb-20">
-      {/* Header — sticky with blur effect */}
-      <header className="sticky top-0 z-30 bg-background/80 backdrop-blur-md border-b border-border">
-        <div className="max-w-4xl mx-auto px-4 py-4 flex items-center justify-between">
+      <header className="sticky top-0 z-30 border-b border-border bg-background/80 backdrop-blur-md">
+        <div className="mx-auto flex max-w-4xl items-center justify-between px-4 py-4">
           <motion.h1
             key={tab}
             className="text-2xl font-heading font-bold text-foreground"
@@ -117,32 +115,32 @@ export default function Index({ user, onSignOut }: IndexProps) {
             {tab === 'outfits' && 'Saved Outfits'}
           </motion.h1>
           <div className="flex items-center gap-2">
-            {/* Sync indicator */}
-            <span className="text-xs text-muted-foreground flex items-center gap-1">
+            <span className="flex items-center gap-1 text-xs text-muted-foreground">
               {syncing ? (
-                <><Cloud className="w-3.5 h-3.5 animate-pulse" /> Syncing...</>
+                <><Cloud className="h-3.5 w-3.5 animate-pulse" /> Syncing...</>
               ) : lastSync ? (
-                <><Cloud className="w-3.5 h-3.5 text-primary" /> Synced</>
+                <><Cloud className="h-3.5 w-3.5 text-primary" /> Synced</>
               ) : (
-                <><CloudOff className="w-3.5 h-3.5" /> Local</>
+                <><CloudOff className="h-3.5 w-3.5" /> Local</>
               )}
             </span>
             {tab === 'closet' && (
-              <Button onClick={() => setUploadOpen(true)} className="rounded-xl gap-2" size="sm">
-                <Plus className="w-4 h-4" /> Add Item
+              <Button onClick={() => setUploadOpen(true)} className="gap-2 rounded-xl" size="sm">
+                <Plus className="h-4 w-4" /> Add Item
               </Button>
             )}
-            {/* User avatar + sign out */}
-            <button onClick={onSignOut} className="flex items-center gap-1 p-1 rounded-full hover:bg-muted transition-colors"
-              title="Sign out">
-              <img src={user.picture} alt={user.name} className="w-7 h-7 rounded-full" />
+            <button
+              onClick={onSignOut}
+              className="flex items-center gap-1 rounded-full p-1 transition-colors hover:bg-muted"
+              title="Sign out"
+            >
+              <img src={user.picture} alt={user.name} className="h-7 w-7 rounded-full" />
             </button>
           </div>
         </div>
       </header>
 
-      {/* Content with page transition animations */}
-      <main className="max-w-4xl mx-auto px-4 py-6">
+      <main className="mx-auto max-w-4xl px-4 py-6">
         <AnimatePresence mode="wait">
           {tab === 'closet' && (
             <motion.div
@@ -185,8 +183,8 @@ export default function Index({ user, onSignOut }: IndexProps) {
                 </ResizablePanel>
                 <ResizableHandle withHandle />
                 <ResizablePanel defaultSize={30} minSize={20}>
-                  <div className="h-full p-4 overflow-y-auto">
-                    <h3 className="font-heading font-semibold text-foreground mb-3">Add from closet</h3>
+                  <div className="h-full overflow-y-auto p-4">
+                    <h3 className="mb-3 font-heading font-semibold text-foreground">Add from closet</h3>
                     <ClothingGrid
                       items={items}
                       activeCategory={activeCategory}
