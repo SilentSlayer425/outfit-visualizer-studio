@@ -91,7 +91,7 @@ export function UploadModal({ open, onClose, onUpload }: UploadModalProps) {
       try {
         const resultBlob = await convertHeicFile(file);
         const resultData = await readBlobAsDataUrl(resultBlob);
-        setImageData(resultData);
+        setImageData(await compressImage(resultData));
         setConverting(false);
       } catch {
         setFileError('Failed to convert HEIC/HEIF file. Please try converting it manually to JPG.');
