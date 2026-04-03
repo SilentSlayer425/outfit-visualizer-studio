@@ -35,6 +35,33 @@ const readBlobAsDataUrl = (blob: Blob) =>
     reader.readAsDataURL(blob);
   });
 
+// Compress / resize an image data-URL so it doesn't blow up localStorage
+// Max dimension: 1200px — change to allow larger/smaller stored images
+// Quality: 0.85 — lower = smaller file, worse quality
+const MAX_IMG_DIM = 1200;
+const IMG_QUALITY = 0.85;
+
+const compressImage = (dataUrl: string): Promise<string> =>
+  new Promise((resolve) => {
+    const img = new Image();
+    img.onload = () => {
+      let { width, height } = img;
+      if (width > MAX_IMG_DIM || height > MAX_IMG_DIM) {
+        const ratio = Math.min(MAX_IMG_DIM / width, MAX_IMG_DIM / height);
+        width = Math.round(width * ratio);
+        height = Math.round(height * ratio);
+      }
+      const canvas = document.createElement('canvas');
+      canvas.width = width;
+      canvas.height = height;
+      const ctx = canvas.getContext('2d')!;
+      ctx.drawImage(img, 0, 0, width, height);
+      resolve(canvas.toDataURL('image/jpeg', IMG_QUALITY));
+    };
+    img.onerror = () => resolve(dataUrl); // fallback to original
+    img.src = dataUrl;
+  });
+
 const convertHeicFile = async (file: File) => {
   try {
     const { heicTo } = await import('heic-to/csp');
@@ -64,7 +91,7 @@ export function UploadModal({ open, onClose, onUpload }: UploadModalProps) {
       try {
         const resultBlob = await convertHeicFile(file);
         const resultData = await readBlobAsDataUrl(resultBlob);
-        setImageData(resultData);
+        setImageData(await compressImage(resultData));
         setConverting(false);
       } catch {
         setFileError('Failed to convert HEIC/HEIF file. Please try converting it manually to JPG.');
@@ -82,8 +109,10 @@ export function UploadModal({ open, onClose, onUpload }: UploadModalProps) {
     }
 
     const reader = new FileReader();
-    reader.onload = (e) => setImageData(e.target?.result as string);
-    reader.onerror = () => setFileError('Failed to read the file. Please try again.');
+    reader.onload = async (e) => {
+      const raw = e.target?.result as string;
+      setImageData(await compressImage(raw));
+    };
     reader.readAsDataURL(file);
   };
 
