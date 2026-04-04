@@ -1,12 +1,20 @@
+/**
+ * Upload Modal
+ * 
+ * Customization:
+ *  - Modal width: change max-w-md
+ *  - Drag zone height: change h-36 / h-48
+ *  - Supported formats: see SUPPORTED_IMAGE_FORMAT_LABEL in image-processing.ts
+ */
 import { useState, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { X, Upload, AlertTriangle, Loader2 } from 'lucide-react';
+import { X, Upload, AlertTriangle, Loader2, Plus, Tag } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import type { ClothingCategory } from '@/types/closet';
-import { CATEGORY_LABELS, CATEGORY_ORDER } from '@/types/closet';
+import { CATEGORY_LABELS, CATEGORY_ORDER, SUBCATEGORIES } from '@/types/closet';
 import {
   isHeicLike,
   isSupportedImage,
@@ -17,12 +25,15 @@ import {
 interface UploadModalProps {
   open: boolean;
   onClose: () => void;
-  onUpload: (data: { name: string; category: ClothingCategory; imageData: string }) => void;
+  onUpload: (data: { name: string; category: ClothingCategory; subcategory?: string; customTags?: string[]; imageData: string }) => void;
 }
 
 export function UploadModal({ open, onClose, onUpload }: UploadModalProps) {
   const [name, setName] = useState('');
   const [category, setCategory] = useState<ClothingCategory>('tops');
+  const [subcategory, setSubcategory] = useState<string>('');
+  const [customTags, setCustomTags] = useState<string[]>([]);
+  const [newTag, setNewTag] = useState('');
   const [imageData, setImageData] = useState<string | null>(null);
   const [dragOver, setDragOver] = useState(false);
   const [fileError, setFileError] = useState<string | null>(null);
@@ -61,24 +72,43 @@ export function UploadModal({ open, onClose, onUpload }: UploadModalProps) {
     if (file) handleFile(file);
   };
 
+  const addTag = () => {
+    const tag = newTag.trim();
+    if (tag && !customTags.includes(tag)) {
+      setCustomTags((prev) => [...prev, tag]);
+    }
+    setNewTag('');
+  };
+
+  const removeTag = (tag: string) => {
+    setCustomTags((prev) => prev.filter((t) => t !== tag));
+  };
+
   const handleSubmit = () => {
     if (!imageData || !name.trim()) return;
-    onUpload({ name: name.trim(), category, imageData });
-    setName('');
-    setCategory('tops');
-    setImageData(null);
-    setFileError(null);
-    onClose();
+    onUpload({
+      name: name.trim(),
+      category,
+      subcategory: subcategory && subcategory !== 'none' ? subcategory : undefined,
+      customTags: customTags.length > 0 ? customTags : undefined,
+      imageData,
+    });
+    reset();
   };
 
   const reset = () => {
     setName('');
     setCategory('tops');
+    setSubcategory('');
+    setCustomTags([]);
+    setNewTag('');
     setImageData(null);
     setFileError(null);
     setConverting(false);
     onClose();
   };
+
+  const availableSubs = SUBCATEGORIES[category] || [];
 
   return (
     <AnimatePresence>
@@ -91,7 +121,7 @@ export function UploadModal({ open, onClose, onUpload }: UploadModalProps) {
         >
           <div className="absolute inset-0 bg-foreground/20 backdrop-blur-sm" onClick={reset} />
           <motion.div
-            className="relative z-10 w-full max-w-md rounded-2xl bg-card p-6 shadow-float"
+            className="relative z-10 w-full max-w-md rounded-2xl bg-card p-6 shadow-float max-h-[90vh] overflow-y-auto"
             initial={{ scale: 0.95, opacity: 0 }}
             animate={{ scale: 1, opacity: 1 }}
             exit={{ scale: 0.95, opacity: 0 }}
@@ -114,10 +144,7 @@ export function UploadModal({ open, onClose, onUpload }: UploadModalProps) {
               className={`relative mb-4 cursor-pointer overflow-hidden rounded-xl border-2 border-dashed transition-colors ${
                 dragOver ? 'border-primary bg-primary/5' : 'border-border hover:border-primary/50'
               } ${imageData ? 'h-48' : 'h-36'}`}
-              onDragOver={(e) => {
-                e.preventDefault();
-                setDragOver(true);
-              }}
+              onDragOver={(e) => { e.preventDefault(); setDragOver(true); }}
               onDragLeave={() => setDragOver(false)}
               onDrop={handleDrop}
               onClick={() => fileRef.current?.click()}
@@ -125,8 +152,7 @@ export function UploadModal({ open, onClose, onUpload }: UploadModalProps) {
               {converting ? (
                 <div className="flex h-full flex-col items-center justify-center gap-2 text-muted-foreground">
                   <Loader2 className="h-8 w-8 animate-spin text-primary" />
-                  <span className="text-sm font-medium">{imageData ? 'Re-processing image…' : 'Processing image…'}</span>
-                  <span className="text-xs text-muted-foreground/70">High-res photos are resized to about 12MP and stripped of metadata.</span>
+                  <span className="text-sm font-medium">Processing image…</span>
                 </div>
               ) : imageData ? (
                 <img src={imageData} alt="Preview" className="h-full w-full object-contain" />
@@ -153,7 +179,8 @@ export function UploadModal({ open, onClose, onUpload }: UploadModalProps) {
                 onChange={(e) => setName(e.target.value)}
                 className="rounded-xl bg-background"
               />
-              <Select value={category} onValueChange={(v) => setCategory(v as ClothingCategory)}>
+
+              <Select value={category} onValueChange={(v) => { setCategory(v as ClothingCategory); setSubcategory(''); }}>
                 <SelectTrigger className="rounded-xl bg-background">
                   <SelectValue />
                 </SelectTrigger>
@@ -165,6 +192,52 @@ export function UploadModal({ open, onClose, onUpload }: UploadModalProps) {
                   ))}
                 </SelectContent>
               </Select>
+
+              {/* Subcategory — pick from built-in list */}
+              {availableSubs.length > 0 && (
+                <Select value={subcategory} onValueChange={setSubcategory}>
+                  <SelectTrigger className="rounded-xl bg-background">
+                    <SelectValue placeholder="Subcategory (optional)" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="none">None</SelectItem>
+                    {availableSubs.map((sub) => (
+                      <SelectItem key={sub} value={sub}>{sub}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              )}
+
+              {/* Custom tags */}
+              <div>
+                <label className="text-xs font-medium text-muted-foreground mb-1.5 block">
+                  <Tag className="w-3 h-3 inline mr-1" />
+                  Custom Tags
+                </label>
+                {customTags.length > 0 && (
+                  <div className="flex flex-wrap gap-1.5 mb-2">
+                    {customTags.map((tag) => (
+                      <span key={tag} className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-medium bg-primary/10 text-primary">
+                        {tag}
+                        <button onClick={() => removeTag(tag)} className="hover:text-destructive"><X className="w-3 h-3" /></button>
+                      </span>
+                    ))}
+                  </div>
+                )}
+                <div className="flex gap-2">
+                  <Input
+                    placeholder="Add a custom tag..."
+                    value={newTag}
+                    onChange={(e) => setNewTag(e.target.value)}
+                    onKeyDown={(e) => { if (e.key === 'Enter') { e.preventDefault(); addTag(); } }}
+                    className="rounded-xl bg-background text-sm flex-1"
+                  />
+                  <Button variant="outline" size="sm" onClick={addTag} className="rounded-xl" disabled={!newTag.trim()}>
+                    <Plus className="w-3.5 h-3.5" />
+                  </Button>
+                </div>
+              </div>
+
               <Button
                 onClick={handleSubmit}
                 disabled={!imageData || !name.trim() || converting}
