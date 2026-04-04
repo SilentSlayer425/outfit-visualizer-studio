@@ -1,6 +1,15 @@
-import { Shirt, Palette, Heart } from 'lucide-react';
+/**
+ * Bottom Navigation
+ *
+ * Customization:
+ *  - Icon size: change w-5 h-5
+ *  - Active color: uses text-primary token
+ *  - Background blur: change backdrop-blur-md
+ *  - Background opacity: change bg-card/90
+ */
+import { Shirt, Palette, Heart, Gift } from 'lucide-react';
 
-type Tab = 'closet' | 'builder' | 'outfits';
+export type Tab = 'closet' | 'builder' | 'outfits' | 'donate';
 
 interface AppNavProps {
   active: Tab;
@@ -12,6 +21,7 @@ export function AppNav({ active, onChange }: AppNavProps) {
     { id: 'closet', label: 'My Closet', icon: <Shirt className="w-5 h-5" /> },
     { id: 'builder', label: 'Build Outfit', icon: <Palette className="w-5 h-5" /> },
     { id: 'outfits', label: 'Saved', icon: <Heart className="w-5 h-5" /> },
+    { id: 'donate', label: 'Support', icon: <Gift className="w-5 h-5" /> },
   ];
 
   return (

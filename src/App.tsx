@@ -1,16 +1,14 @@
 /**
  * App Root
  * 
- * Handles routing and authentication state.
- * If user is not signed in → show Login page.
- * If signed in → show main app.
- * 
+ * Handles routing, auth state, and Vercel Analytics.
+ *
  * Customization:
- *  - To skip Google login during development, replace the auth check
- *    with a hardcoded user object (see comments below)
+ *  - To skip Google login during dev, hardcode a user object
  */
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Route, Routes } from "react-router-dom";
+import { Analytics } from '@vercel/analytics/react';
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { Toaster } from "@/components/ui/toaster";
 import { TooltipProvider } from "@/components/ui/tooltip";
@@ -30,11 +28,6 @@ const App = () => {
         <Toaster />
         <Sonner />
         <BrowserRouter>
-          {/* 
-            Auth gate: shows Login when not signed in.
-            To skip auth during development, comment out the !user check:
-            {false ? ( ... Login ... ) : ( ... Routes ... )}
-          */}
           {!user ? (
             <Login onSignIn={signIn} loading={loading} />
           ) : (
@@ -44,6 +37,8 @@ const App = () => {
             </Routes>
           )}
         </BrowserRouter>
+        {/* Vercel Web Analytics — collects anonymous page views, device info, country */}
+        <Analytics />
       </TooltipProvider>
     </QueryClientProvider>
   );

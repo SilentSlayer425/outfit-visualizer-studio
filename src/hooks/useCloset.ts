@@ -6,7 +6,6 @@
  *
  * Customization:
  *  - Change DB_NAME / STORE_NAME in src/lib/closet-storage.ts to rename local storage buckets
- *  - The setItems/setOutfits functions accept the standard React setter pattern
  */
 import { useState, useEffect, useCallback } from 'react';
 import type { ClothingItem, Outfit, ClothingCategory } from '@/types/closet';
@@ -74,9 +73,12 @@ export function useCloset() {
     return newItem;
   }, []);
 
+  const updateItem = useCallback((id: string, updates: Partial<Pick<ClothingItem, 'name' | 'category' | 'subcategory' | 'customTags'>>) => {
+    setItems((prev) => prev.map((i) => (i.id === id ? { ...i, ...updates } : i)));
+  }, []);
+
   const removeItem = useCallback((id: string) => {
     setItems((prev) => prev.filter((i) => i.id !== id));
-    // Also remove from any outfits that reference this item
     setOutfits((prev) => prev.map((o) => ({ ...o, items: o.items.filter((oi) => oi.clothingId !== id) })));
   }, []);
 
@@ -96,7 +98,6 @@ export function useCloset() {
 
   const getItemById = useCallback((id: string) => items.find((i) => i.id === id), [items]);
 
-  // Bulk setters for Drive sync/import
   const replaceAll = useCallback((newItems: ClothingItem[], newOutfits: Outfit[]) => {
     setItems(newItems);
     setOutfits(newOutfits);
@@ -107,6 +108,7 @@ export function useCloset() {
     outfits,
     ready,
     addItem,
+    updateItem,
     removeItem,
     getItemsByCategory,
     saveOutfit,
