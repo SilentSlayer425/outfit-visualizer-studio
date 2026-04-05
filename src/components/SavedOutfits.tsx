@@ -1,14 +1,16 @@
 /**
  * Saved Outfits
  *
- * Shows saved outfits as cards. Hovering items shows their name.
+ * Shows saved outfits as cards with items wrapping into rows.
+ * Hovering items shows their name. Tap on mobile opens detail.
  * "Load" button reloads the outfit into the builder.
- * Delete has confirm dialog. Mobile: delete always visible, tap item opens detail.
+ * Delete has confirm dialog.
  *
  * Customization:
  *  - Card columns: change sm:grid-cols-2
- *  - Preview height: change h-48
+ *  - Preview min height: change min-h-[120px]
  *  - Card corners: change rounded-2xl
+ *  - Item thumbnail size: change h-16 w-16
  */
 import { useState } from 'react';
 import { motion } from 'framer-motion';
@@ -24,9 +26,11 @@ interface SavedOutfitsProps {
   getItemById: (id: string) => ClothingItem | undefined;
   onRemove: (id: string) => void;
   onLoad?: (outfit: Outfit) => void;
+  onEditItem?: (item: ClothingItem) => void;
+  onDeleteItem?: (id: string) => void;
 }
 
-export function SavedOutfits({ outfits, getItemById, onRemove, onLoad }: SavedOutfitsProps) {
+export function SavedOutfits({ outfits, getItemById, onRemove, onLoad, onEditItem, onDeleteItem }: SavedOutfitsProps) {
   const [deleteTarget, setDeleteTarget] = useState<string | null>(null);
   const [viewItem, setViewItem] = useState<ClothingItem | null>(null);
 
@@ -58,9 +62,9 @@ export function SavedOutfits({ outfits, getItemById, onRemove, onLoad }: SavedOu
             transition={{ delay: i * 0.05 }}
             className="group relative rounded-2xl bg-card shadow-soft overflow-hidden"
           >
-            {/* Outfit preview — items shown with hover tooltip for names, tap on mobile opens detail */}
-            <div className="relative h-48 bg-muted/30 flex items-center justify-center gap-1 p-4 overflow-hidden">
-              {outfit.items.slice(0, 5).map((oi, idx) => {
+            {/* Outfit preview — items wrap into multiple rows, change h-16 w-16 for thumb size */}
+            <div className="relative min-h-[120px] bg-muted/30 flex flex-wrap items-center justify-center gap-2 p-4">
+              {outfit.items.map((oi, idx) => {
                 const item = getItemById(oi.clothingId);
                 if (!item) return null;
                 return (
@@ -69,7 +73,7 @@ export function SavedOutfits({ outfits, getItemById, onRemove, onLoad }: SavedOu
                       <img
                         src={item.imageData}
                         alt={item.name}
-                        className="h-24 w-auto object-contain cursor-pointer hover:scale-110 transition-transform"
+                        className="h-16 w-16 object-contain cursor-pointer hover:scale-110 transition-transform"
                         onClick={() => setViewItem(item)}
                       />
                     </TooltipTrigger>
@@ -129,6 +133,8 @@ export function SavedOutfits({ outfits, getItemById, onRemove, onLoad }: SavedOu
         open={!!viewItem}
         item={viewItem}
         onClose={() => setViewItem(null)}
+        onEdit={onEditItem ? (item) => { setViewItem(null); onEditItem(item); } : undefined}
+        onDelete={onDeleteItem ? (item) => { setViewItem(null); onDeleteItem(item.id); } : undefined}
       />
     </>
   );

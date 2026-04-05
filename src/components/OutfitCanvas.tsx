@@ -6,6 +6,9 @@
  * Arrow keys move the selected item. Items are placed at smart positions
  * based on their clothing category.
  * 
+ * Layering: Use the up/down arrows on the selected item to bring forward
+ * or send backward.
+ * 
  * Customization:
  *  - Canvas height: change CANVAS_MIN_HEIGHT in src/config.ts
  *  - Arrow key speed: change ARROW_KEY_STEP in src/config.ts
@@ -17,7 +20,7 @@
  */
 import { useState, useCallback, useEffect, useRef } from 'react';
 import { motion } from 'framer-motion';
-import { Save, Trash2, Plus, ZoomIn, ZoomOut } from 'lucide-react';
+import { Save, Trash2, Plus, ZoomIn, ZoomOut, ArrowUp, ArrowDown } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import {
@@ -69,7 +72,6 @@ export function OutfitCanvas({ outfitItems, getItemById, onUpdateItem, onRemoveI
     let newX = dragging.itemX + (e.clientX - dragging.startX);
     let newY = dragging.itemY + (e.clientY - dragging.startY);
 
-    // Constrain to canvas bounds
     const maxX = canvas.width / 2 - halfW;
     const maxY = canvas.height / 2 - halfH;
     newX = Math.max(-maxX, Math.min(maxX, newX));
@@ -90,7 +92,6 @@ export function OutfitCanvas({ outfitItems, getItemById, onUpdateItem, onRemoveI
       if (!item) return;
 
       let dx = 0, dy = 0;
-      // Arrow keys: move selected item by ARROW_KEY_STEP pixels
       if (e.key === 'ArrowLeft') dx = -ARROW_KEY_STEP;
       else if (e.key === 'ArrowRight') dx = ARROW_KEY_STEP;
       else if (e.key === 'ArrowUp') dy = -ARROW_KEY_STEP;
@@ -120,6 +121,23 @@ export function OutfitCanvas({ outfitItems, getItemById, onUpdateItem, onRemoveI
   const handleScale = (index: number, delta: number) => {
     const current = outfitItems[index].scale;
     onUpdateItem(index, { scale: Math.max(ITEM_MIN_SCALE, Math.min(ITEM_MAX_SCALE, current + delta)) });
+  };
+
+  // ── Layering: bring forward / send backward ──
+  const bringForward = (index: number) => {
+    const current = outfitItems[index].zIndex;
+    const maxZ = Math.max(...outfitItems.map((oi) => oi.zIndex));
+    if (current < maxZ) {
+      onUpdateItem(index, { zIndex: maxZ + 1 });
+    }
+  };
+
+  const sendBackward = (index: number) => {
+    const current = outfitItems[index].zIndex;
+    const minZ = Math.min(...outfitItems.map((oi) => oi.zIndex));
+    if (current > minZ) {
+      onUpdateItem(index, { zIndex: minZ - 1 });
+    }
   };
 
   return (
@@ -166,7 +184,6 @@ export function OutfitCanvas({ outfitItems, getItemById, onUpdateItem, onRemoveI
                 isSelected ? 'ring-2 ring-primary ring-offset-2 rounded-lg' : ''
               }`}
               style={{
-                // Position items from canvas center
                 left: `calc(50% + ${oi.x}px - ${size / 2}px)`,
                 top: `calc(50% + ${oi.y}px - ${size / 2}px)`,
                 width: `${size}px`,
@@ -185,19 +202,29 @@ export function OutfitCanvas({ outfitItems, getItemById, onUpdateItem, onRemoveI
               {/* Item controls — appear when selected */}
               {isSelected && (
                 <div className="absolute -bottom-10 left-1/2 -translate-x-1/2 flex gap-1 bg-card rounded-full shadow-float p-1 z-50">
+                  {/* Send backward — moves item behind others */}
+                  <button onClick={(e) => { e.stopPropagation(); sendBackward(idx); }}
+                    className="p-1 rounded-full hover:bg-muted" title="Send backward">
+                    <ArrowDown className="w-4 h-4" />
+                  </button>
+                  {/* Bring forward — moves item in front of others */}
+                  <button onClick={(e) => { e.stopPropagation(); bringForward(idx); }}
+                    className="p-1 rounded-full hover:bg-muted" title="Bring forward">
+                    <ArrowUp className="w-4 h-4" />
+                  </button>
                   {/* Zoom out button */}
                   <button onClick={(e) => { e.stopPropagation(); handleScale(idx, -SCALE_STEP); }}
-                    className="p-1 rounded-full hover:bg-muted">
+                    className="p-1 rounded-full hover:bg-muted" title="Zoom out">
                     <ZoomOut className="w-4 h-4" />
                   </button>
                   {/* Zoom in button */}
                   <button onClick={(e) => { e.stopPropagation(); handleScale(idx, SCALE_STEP); }}
-                    className="p-1 rounded-full hover:bg-muted">
+                    className="p-1 rounded-full hover:bg-muted" title="Zoom in">
                     <ZoomIn className="w-4 h-4" />
                   </button>
                   {/* Delete button — change hover:bg-destructive for different delete color */}
                   <button onClick={(e) => { e.stopPropagation(); onRemoveItem(idx); setSelectedIdx(null); }}
-                    className="p-1 rounded-full hover:bg-destructive hover:text-destructive-foreground">
+                    className="p-1 rounded-full hover:bg-destructive hover:text-destructive-foreground" title="Remove">
                     <Trash2 className="w-4 h-4" />
                   </button>
                 </div>
