@@ -53,6 +53,23 @@ function geoKey(r: GeoResult) {
   return `${r.latitude.toFixed(2)}_${r.longitude.toFixed(2)}`;
 }
 
+/**
+ * Get the current local hour string for the selected location
+ * in the same format Open-Meteo returns: "YYYY-MM-DDTHH:00"
+ */
+function getLocalHourStringFromUtcOffset(utcOffsetSeconds: number): string {
+  const nowUtcMs = Date.now();
+  const localMs = nowUtcMs + utcOffsetSeconds * 1000;
+  const localDate = new Date(localMs);
+
+  const year = localDate.getUTCFullYear();
+  const month = String(localDate.getUTCMonth() + 1).padStart(2, '0');
+  const day = String(localDate.getUTCDate()).padStart(2, '0');
+  const hour = String(localDate.getUTCHours()).padStart(2, '0');
+
+  return `${year}-${month}-${day}T${hour}:00`;
+}
+
 interface WeatherWidgetProps {
   savedCity: string | null;
   onCityChange: (city: string, lat: number, lon: number) => void;
@@ -76,24 +93,46 @@ export function WeatherWidget({ savedCity, onCityChange }: WeatherWidgetProps) {
     setLoading(true);
 
     const unit = useCelsius ? 'celsius' : 'fahrenheit';
+
     fetch(
-      `https://api.open-meteo.com/v1/forecast?latitude=${coords.lat}&longitude=${coords.lon}&hourly=temperature_2m,weather_code,precipitation_probability&forecast_hours=${FORECAST_HOURS}&temperature_unit=${unit}`
+      `https://api.open-meteo.com/v1/forecast?latitude=${coords.lat}&longitude=${coords.lon}&hourly=temperature_2m,weather_code,precipitation_probability&forecast_days=2&temperature_unit=${unit}&timezone=auto`
     )
       .then((r) => r.json())
       .then((data) => {
         if (cancelled) return;
-        const hours: HourForecast[] = (data.hourly?.time || []).map((t: string, i: number) => ({
-          time: t,
-          temp: data.hourly.temperature_2m[i],
-          weatherCode: data.hourly.weather_code[i],
-          rainChance: data.hourly.precipitation_probability?.[i] ?? 0,
-        }));
+
+        const times: string[] = data.hourly?.time || [];
+        const temps: number[] = data.hourly?.temperature_2m || [];
+        const codes: number[] = data.hourly?.weather_code || [];
+        const rain: number[] = data.hourly?.precipitation_probability || [];
+        const utcOffsetSeconds: number = data.utc_offset_seconds ?? 0;
+
+        // Current hour in the SELECTED location's timezone
+        const currentLocalHour = getLocalHourStringFromUtcOffset(utcOffsetSeconds);
+
+        // Find the first forecast hour that matches or comes after the local current hour
+        let startIndex = times.findIndex((t) => t >= currentLocalHour);
+        if (startIndex === -1) startIndex = 0;
+
+        const hours: HourForecast[] = times
+          .slice(startIndex, startIndex + FORECAST_HOURS)
+          .map((t, i) => ({
+            time: t,
+            temp: temps[startIndex + i],
+            weatherCode: codes[startIndex + i],
+            rainChance: rain[startIndex + i] ?? 0,
+          }));
+
         setForecast(hours);
       })
-      .catch(() => {})
+      .catch(() => {
+        if (!cancelled) setForecast([]);
+      })
       .finally(() => !cancelled && setLoading(false));
 
-    return () => { cancelled = true; };
+    return () => {
+      cancelled = true;
+    };
   }, [coords, useCelsius]);
 
   // If savedCity exists, geocode it on mount
@@ -120,13 +159,18 @@ export function WeatherWidget({ savedCity, onCityChange }: WeatherWidgetProps) {
       const res = await fetch(`https://geocoding-api.open-meteo.com/v1/search?name=${encodeURIComponent(query.trim())}&count=10`);
       const data = await res.json();
       const raw: GeoResult[] = data.results || [];
+
       // Deduplicate by lat/lon
       const seen = new Set<string>();
       const unique: GeoResult[] = [];
       for (const r of raw) {
         const k = geoKey(r);
-        if (!seen.has(k)) { seen.add(k); unique.push(r); }
+        if (!seen.has(k)) {
+          seen.add(k);
+          unique.push(r);
+        }
       }
+
       setResults(unique.slice(0, 5));
     } catch {
       setResults([]);
@@ -167,7 +211,12 @@ export function WeatherWidget({ savedCity, onCityChange }: WeatherWidgetProps) {
               placeholder="Search city..."
               value={query}
               onChange={(e) => setQuery(e.target.value)}
-              onKeyDown={(e) => { if (e.key === 'Enter') { e.preventDefault(); searchCity(); } }}
+              onKeyDown={(e) => {
+                if (e.key === 'Enter') {
+                  e.preventDefault();
+                  searchCity();
+                }
+              }}
               className="rounded-xl bg-background text-sm flex-1"
             />
             <Button variant="outline" size="sm" onClick={searchCity} className="rounded-xl" disabled={searching || !query.trim()}>
@@ -180,7 +229,8 @@ export function WeatherWidget({ savedCity, onCityChange }: WeatherWidgetProps) {
             <div className="rounded-xl border border-border bg-background divide-y divide-border overflow-hidden">
               {results.map((r, i) => (
                 <button key={i} onClick={() => selectCity(r)} className="w-full text-left px-3 py-2 text-sm hover:bg-muted transition-colors">
-                  {r.name}{r.admin1 ? `, ${r.admin1}` : ''}, {r.country}
+                  {r.name}
+                  {r.admin1 ? `, ${r.admin1}` : ''}, {r.country}
                 </button>
               ))}
             </div>
@@ -204,12 +254,15 @@ export function WeatherWidget({ savedCity, onCityChange }: WeatherWidgetProps) {
                 {forecast.map((h) => {
                   const d = new Date(h.time);
                   const hour = d.toLocaleTimeString([], { hour: 'numeric' });
+
                   return (
                     <div key={h.time} className="flex flex-col items-center gap-1 rounded-xl bg-muted/40 p-2 min-w-[72px]">
                       <span className="text-xs text-muted-foreground">{hour}</span>
                       <span className="text-xl">{weatherEmoji(h.weatherCode)}</span>
-                      <span className="text-sm font-semibold text-foreground">{Math.round(h.temp)}{tempUnit}</span>
-                      {/* Rain chance */}
+                      <span className="text-sm font-semibold text-foreground">
+                        {Math.round(h.temp)}
+                        {tempUnit}
+                      </span>
                       <span className="text-[10px] text-muted-foreground">💧 {h.rainChance}%</span>
                     </div>
                   );
