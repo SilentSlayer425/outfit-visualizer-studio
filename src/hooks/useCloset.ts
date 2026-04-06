@@ -73,7 +73,7 @@ export function useCloset() {
     return newItem;
   }, []);
 
-  const updateItem = useCallback((id: string, updates: Partial<Pick<ClothingItem, 'name' | 'category' | 'subcategory' | 'customTags'>>) => {
+  const updateItem = useCallback((id: string, updates: Partial<Pick<ClothingItem, 'name' | 'category' | 'subcategory' | 'customTags' | 'description'>>) => {
     setItems((prev) => prev.map((i) => (i.id === id ? { ...i, ...updates } : i)));
   }, []);
 

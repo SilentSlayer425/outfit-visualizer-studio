@@ -1,7 +1,7 @@
 /**
  * Item Detail Modal
  *
- * View modal for clothing items. Shows full image, name, category, subcategory, tags.
+ * View modal for clothing items. Shows full image, name, category, subcategory, description, tags.
  * Optionally shows Edit and Delete buttons when callbacks are provided.
  *
  * Customization:
@@ -43,7 +43,7 @@ export function ItemDetailModal({ open, item, onClose, onEdit, onDelete }: ItemD
           >
             <div className="absolute inset-0 bg-foreground/20 backdrop-blur-sm" onClick={onClose} />
             <motion.div
-              className="relative z-10 w-full max-w-sm rounded-2xl bg-card p-5 shadow-float"
+              className="relative z-10 w-full max-w-sm rounded-2xl bg-card p-5 shadow-float max-h-[90vh] overflow-y-auto"
               initial={{ scale: 0.95, opacity: 0 }}
               animate={{ scale: 1, opacity: 1 }}
               exit={{ scale: 0.95, opacity: 0 }}
@@ -65,6 +65,11 @@ export function ItemDetailModal({ open, item, onClose, onEdit, onDelete }: ItemD
                   {CATEGORY_LABELS[item.category]}
                   {item.subcategory && <span className="text-muted-foreground ml-1">· {item.subcategory}</span>}
                 </p>
+
+                {/* Description */}
+                {item.description && (
+                  <p className="text-sm text-muted-foreground">{item.description}</p>
+                )}
 
                 {item.customTags && item.customTags.length > 0 && (
                   <div className="flex flex-wrap gap-1.5">

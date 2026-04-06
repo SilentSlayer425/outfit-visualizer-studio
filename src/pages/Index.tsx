@@ -11,8 +11,9 @@
  */
 import { useState, useCallback, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Plus, Cloud, CloudOff } from 'lucide-react';
+import { Plus, Cloud, CloudOff, LogOut, Trash2, RefreshCw } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import { ConfirmDialog } from '@/components/ConfirmDialog';
 import { useCloset } from '@/hooks/useCloset';
 import { useGoogleDrive } from '@/hooks/useGoogleDrive';
 import { useIsMobile } from '@/hooks/use-mobile';
@@ -52,6 +53,8 @@ export default function Index({ user, onSignOut }: IndexProps) {
   const [activeCategory, setActiveCategory] = useState<ClothingCategory | 'all'>('all');
   const [outfitItems, setOutfitItems] = useState<OutfitItem[]>([]);
   const [weatherCity, setWeatherCity] = useState<string | null>(null);
+  const [profileMenuOpen, setProfileMenuOpen] = useState(false);
+  const [confirmDeleteAll, setConfirmDeleteAll] = useState(false);
 
   // Load from Drive on mount
   useEffect(() => {
@@ -79,7 +82,7 @@ export default function Index({ user, onSignOut }: IndexProps) {
     return () => clearTimeout(timer);
   }, [items, outfits, weatherCity, saveToDrive, ready]);
 
-  const handleUpload = useCallback((data: { name: string; category: ClothingCategory; subcategory?: string; customTags?: string[]; imageData: string }) => {
+  const handleUpload = useCallback((data: { name: string; category: ClothingCategory; subcategory?: string; customTags?: string[]; description?: string; imageData: string }) => {
     addItem(data);
   }, [addItem]);
 
@@ -92,7 +95,7 @@ export default function Index({ user, onSignOut }: IndexProps) {
         x: CATEGORY_X_DEFAULTS[item.category] ?? 0,
         y: CATEGORY_Y_DEFAULTS[item.category] ?? 0,
         scale: 1,
-        zIndex: prev.length,
+        zIndex: prev.length + 1,
       },
     ]);
   }, []);
@@ -118,6 +121,15 @@ export default function Index({ user, onSignOut }: IndexProps) {
   const handleWeatherCityChange = useCallback((city: string) => {
     setWeatherCity(city);
   }, []);
+
+  const handleDeleteAllData = useCallback(() => {
+    replaceAll([], []);
+    setConfirmDeleteAll(false);
+  }, [replaceAll]);
+
+  const handleSwitchAccount = useCallback(() => {
+    onSignOut();
+  }, [onSignOut]);
 
   const headerTitle: Record<Tab, string> = {
     closet: 'My Closet',
@@ -154,13 +166,45 @@ export default function Index({ user, onSignOut }: IndexProps) {
                 <Plus className="h-4 w-4" /> Add Item
               </Button>
             )}
-            <button
-              onClick={onSignOut}
-              className="flex items-center gap-1 rounded-full p-1 transition-colors hover:bg-muted"
-              title="Sign out"
-            >
-              <img src={user.picture} alt={user.name} className="h-7 w-7 rounded-full" />
-            </button>
+            {/* Profile avatar — opens dropdown menu */}
+            <div className="relative">
+              <button
+                onClick={() => setProfileMenuOpen((p) => !p)}
+                className="flex items-center gap-1 rounded-full p-1 transition-colors hover:bg-muted"
+                title="Account menu"
+              >
+                <img src={user.picture} alt={user.name} className="h-7 w-7 rounded-full" />
+              </button>
+              {profileMenuOpen && (
+                <>
+                  <div className="fixed inset-0 z-40" onClick={() => setProfileMenuOpen(false)} />
+                  <div className="absolute right-0 top-full mt-2 z-50 w-48 rounded-xl bg-card border border-border shadow-float overflow-hidden">
+                    <div className="px-3 py-2 border-b border-border">
+                      <p className="text-sm font-medium text-foreground truncate">{user.name}</p>
+                      <p className="text-xs text-muted-foreground truncate">{user.email}</p>
+                    </div>
+                    <button
+                      onClick={() => { setProfileMenuOpen(false); handleSwitchAccount(); }}
+                      className="w-full flex items-center gap-2 px-3 py-2.5 text-sm text-foreground hover:bg-muted transition-colors"
+                    >
+                      <RefreshCw className="w-4 h-4" /> Switch Account
+                    </button>
+                    <button
+                      onClick={() => { setProfileMenuOpen(false); setConfirmDeleteAll(true); }}
+                      className="w-full flex items-center gap-2 px-3 py-2.5 text-sm text-destructive hover:bg-destructive/10 transition-colors"
+                    >
+                      <Trash2 className="w-4 h-4" /> Delete All Data
+                    </button>
+                    <button
+                      onClick={() => { setProfileMenuOpen(false); onSignOut(); }}
+                      className="w-full flex items-center gap-2 px-3 py-2.5 text-sm text-foreground hover:bg-muted transition-colors border-t border-border"
+                    >
+                      <LogOut className="w-4 h-4" /> Log Out
+                    </button>
+                  </div>
+                </>
+              )}
+            </div>
           </div>
         </div>
       </header>
@@ -259,7 +303,20 @@ export default function Index({ user, onSignOut }: IndexProps) {
 
       <UploadModal open={uploadOpen} onClose={() => setUploadOpen(false)} onUpload={handleUpload} />
       <EditItemModal open={!!editItem} item={editItem} onClose={() => setEditItem(null)} onSave={updateItem} />
-      <ItemDetailModal open={!!viewItem} item={viewItem} onClose={() => setViewItem(null)} />
+      <ItemDetailModal
+        open={!!viewItem}
+        item={viewItem}
+        onClose={() => setViewItem(null)}
+        onEdit={(item) => { setViewItem(null); setEditItem(item); }}
+        onDelete={(item) => { setViewItem(null); removeItem(item.id); }}
+      />
+      <ConfirmDialog
+        open={confirmDeleteAll}
+        title="Delete All Data"
+        message="Are you sure you want to delete ALL your closet items and saved outfits? This cannot be undone."
+        onConfirm={handleDeleteAllData}
+        onCancel={() => setConfirmDeleteAll(false)}
+      />
       <AppNav active={tab} onChange={setTab} />
     </div>
   );

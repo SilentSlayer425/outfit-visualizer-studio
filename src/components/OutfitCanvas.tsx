@@ -7,7 +7,7 @@
  * based on their clothing category.
  * 
  * Layering: Use the up/down arrows on the selected item to bring forward
- * or send backward.
+ * or send backward. Items always stay above the mannequin silhouette.
  * 
  * Customization:
  *  - Canvas height: change CANVAS_MIN_HEIGHT in src/config.ts
@@ -32,6 +32,9 @@ import {
   ITEM_BASE_SIZE,
 } from '@/config';
 import type { ClothingItem, OutfitItem } from '@/types/closet';
+
+/** Minimum zIndex for outfit items — keeps them above the mannequin */
+const MIN_Z = 1;
 
 interface OutfitCanvasProps {
   outfitItems: OutfitItem[];
@@ -124,20 +127,17 @@ export function OutfitCanvas({ outfitItems, getItemById, onUpdateItem, onRemoveI
   };
 
   // ── Layering: bring forward / send backward ──
+  // Items always stay >= MIN_Z so they remain above the mannequin silhouette
   const bringForward = (index: number) => {
-    const current = outfitItems[index].zIndex;
     const maxZ = Math.max(...outfitItems.map((oi) => oi.zIndex));
-    if (current < maxZ) {
-      onUpdateItem(index, { zIndex: maxZ + 1 });
-    }
+    onUpdateItem(index, { zIndex: maxZ + 1 });
   };
 
   const sendBackward = (index: number) => {
     const current = outfitItems[index].zIndex;
     const minZ = Math.min(...outfitItems.map((oi) => oi.zIndex));
-    if (current > minZ) {
-      onUpdateItem(index, { zIndex: minZ - 1 });
-    }
+    const newZ = minZ - 1;
+    onUpdateItem(index, { zIndex: Math.max(MIN_Z, newZ) });
   };
 
   return (
@@ -151,8 +151,8 @@ export function OutfitCanvas({ outfitItems, getItemById, onUpdateItem, onRemoveI
         onPointerMove={handlePointerMove}
         onPointerUp={handlePointerUp}
       >
-        {/* Mannequin silhouette — change opacity-[0.06] to make more/less visible */}
-        <div className="absolute inset-0 flex items-center justify-center pointer-events-none opacity-[0.06]">
+        {/* Mannequin silhouette — z-index 0, items always above */}
+        <div className="absolute inset-0 flex items-center justify-center pointer-events-none opacity-[0.06]" style={{ zIndex: 0 }}>
           <svg viewBox="0 0 200 500" className="h-[80%]">
             <ellipse cx="100" cy="50" rx="30" ry="40" fill="currentColor" />
             <rect x="70" y="90" width="60" height="120" rx="10" fill="currentColor" />
@@ -164,7 +164,7 @@ export function OutfitCanvas({ outfitItems, getItemById, onUpdateItem, onRemoveI
         </div>
 
         {outfitItems.length === 0 && (
-          <div className="absolute inset-0 flex flex-col items-center justify-center text-muted-foreground">
+          <div className="absolute inset-0 flex flex-col items-center justify-center text-muted-foreground" style={{ zIndex: 1 }}>
             <Plus className="w-10 h-10 mb-2 opacity-40" />
             <p className="text-sm font-medium">Select items from your closet</p>
             <p className="text-xs mt-1">Drag to position · Arrow keys to nudge · Delete to remove</p>
@@ -176,6 +176,8 @@ export function OutfitCanvas({ outfitItems, getItemById, onUpdateItem, onRemoveI
           if (!item) return null;
           const isSelected = selectedIdx === idx;
           const size = ITEM_BASE_SIZE * oi.scale;
+          // Ensure zIndex is always at least MIN_Z
+          const effectiveZ = Math.max(MIN_Z, oi.zIndex);
 
           return (
             <div
@@ -187,7 +189,7 @@ export function OutfitCanvas({ outfitItems, getItemById, onUpdateItem, onRemoveI
                 left: `calc(50% + ${oi.x}px - ${size / 2}px)`,
                 top: `calc(50% + ${oi.y}px - ${size / 2}px)`,
                 width: `${size}px`,
-                zIndex: oi.zIndex + (dragging?.idx === idx ? 100 : 0),
+                zIndex: effectiveZ + (dragging?.idx === idx ? 1000 : 0),
                 touchAction: 'none',
               }}
               onPointerDown={(e) => handlePointerDown(e, idx)}
@@ -201,7 +203,7 @@ export function OutfitCanvas({ outfitItems, getItemById, onUpdateItem, onRemoveI
               />
               {/* Item controls — appear when selected */}
               {isSelected && (
-                <div className="absolute -bottom-10 left-1/2 -translate-x-1/2 flex gap-1 bg-card rounded-full shadow-float p-1 z-50">
+                <div className="absolute -bottom-10 left-1/2 -translate-x-1/2 flex gap-1 bg-card rounded-full shadow-float p-1" style={{ zIndex: 9999 }}>
                   {/* Send backward — moves item behind others */}
                   <button onClick={(e) => { e.stopPropagation(); sendBackward(idx); }}
                     className="p-1 rounded-full hover:bg-muted" title="Send backward">

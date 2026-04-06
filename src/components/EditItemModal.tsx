@@ -1,7 +1,7 @@
 /**
  * Edit Item Modal
  * 
- * Lets users change an item's name, category, subcategory, and custom tags.
+ * Lets users change an item's name, description, category, subcategory, and custom tags.
  * Does NOT edit the photo — only metadata.
  *
  * Customization:
@@ -14,6 +14,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { X, Plus, Tag } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
+import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import type { ClothingItem, ClothingCategory } from '@/types/closet';
 import { CATEGORY_LABELS, CATEGORY_ORDER, SUBCATEGORIES } from '@/types/closet';
@@ -22,7 +23,7 @@ interface EditItemModalProps {
   open: boolean;
   item: ClothingItem | null;
   onClose: () => void;
-  onSave: (id: string, updates: Partial<Pick<ClothingItem, 'name' | 'category' | 'subcategory' | 'customTags'>>) => void;
+  onSave: (id: string, updates: Partial<Pick<ClothingItem, 'name' | 'category' | 'subcategory' | 'customTags' | 'description'>>) => void;
 }
 
 export function EditItemModal({ open, item, onClose, onSave }: EditItemModalProps) {
@@ -31,6 +32,7 @@ export function EditItemModal({ open, item, onClose, onSave }: EditItemModalProp
   const [subcategory, setSubcategory] = useState<string>('');
   const [customTags, setCustomTags] = useState<string[]>([]);
   const [newTag, setNewTag] = useState('');
+  const [description, setDescription] = useState('');
 
   useEffect(() => {
     if (item) {
@@ -38,6 +40,7 @@ export function EditItemModal({ open, item, onClose, onSave }: EditItemModalProp
       setCategory(item.category);
       setSubcategory(item.subcategory || '');
       setCustomTags(item.customTags || []);
+      setDescription(item.description || '');
       setNewTag('');
     }
   }, [item]);
@@ -62,6 +65,7 @@ export function EditItemModal({ open, item, onClose, onSave }: EditItemModalProp
       category,
       subcategory: subcategory || undefined,
       customTags: customTags.length > 0 ? customTags : undefined,
+      description: description.trim() || undefined,
     });
     onClose();
   };
@@ -79,7 +83,7 @@ export function EditItemModal({ open, item, onClose, onSave }: EditItemModalProp
         >
           <div className="absolute inset-0 bg-foreground/20 backdrop-blur-sm" onClick={onClose} />
           <motion.div
-            className="relative z-10 w-full max-w-md rounded-2xl bg-card p-6 shadow-float"
+            className="relative z-10 w-full max-w-md rounded-2xl bg-card p-6 shadow-float max-h-[90vh] overflow-y-auto"
             initial={{ scale: 0.95, opacity: 0 }}
             animate={{ scale: 1, opacity: 1 }}
             exit={{ scale: 0.95, opacity: 0 }}
@@ -105,6 +109,15 @@ export function EditItemModal({ open, item, onClose, onSave }: EditItemModalProp
                 value={name}
                 onChange={(e) => setName(e.target.value)}
                 className="rounded-xl bg-background"
+              />
+
+              {/* Description */}
+              <Textarea
+                placeholder="Description (optional)"
+                value={description}
+                onChange={(e) => setDescription(e.target.value)}
+                className="rounded-xl bg-background text-sm min-h-[60px] resize-none"
+                rows={2}
               />
 
               {/* Category selector */}

@@ -33,6 +33,8 @@ export interface ClothingItem {
   subcategory?: string;
   /** User-created custom tags (free-form strings) */
   customTags?: string[];
+  /** User-written description for this item */
+  description?: string;
   imageData: string; // optimized image data URL (metadata stripped during processing)
   color?: string;
   createdAt: number;

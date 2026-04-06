@@ -11,6 +11,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { X, Upload, AlertTriangle, Loader2, Plus, Tag } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
+import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import type { ClothingCategory } from '@/types/closet';
@@ -25,7 +26,7 @@ import {
 interface UploadModalProps {
   open: boolean;
   onClose: () => void;
-  onUpload: (data: { name: string; category: ClothingCategory; subcategory?: string; customTags?: string[]; imageData: string }) => void;
+  onUpload: (data: { name: string; category: ClothingCategory; subcategory?: string; customTags?: string[]; description?: string; imageData: string }) => void;
 }
 
 export function UploadModal({ open, onClose, onUpload }: UploadModalProps) {
@@ -34,6 +35,7 @@ export function UploadModal({ open, onClose, onUpload }: UploadModalProps) {
   const [subcategory, setSubcategory] = useState<string>('');
   const [customTags, setCustomTags] = useState<string[]>([]);
   const [newTag, setNewTag] = useState('');
+  const [description, setDescription] = useState('');
   const [imageData, setImageData] = useState<string | null>(null);
   const [dragOver, setDragOver] = useState(false);
   const [fileError, setFileError] = useState<string | null>(null);
@@ -91,6 +93,7 @@ export function UploadModal({ open, onClose, onUpload }: UploadModalProps) {
       category,
       subcategory: subcategory && subcategory !== 'none' ? subcategory : undefined,
       customTags: customTags.length > 0 ? customTags : undefined,
+      description: description.trim() || undefined,
       imageData,
     });
     reset();
@@ -102,6 +105,7 @@ export function UploadModal({ open, onClose, onUpload }: UploadModalProps) {
     setSubcategory('');
     setCustomTags([]);
     setNewTag('');
+    setDescription('');
     setImageData(null);
     setFileError(null);
     setConverting(false);
@@ -178,6 +182,15 @@ export function UploadModal({ open, onClose, onUpload }: UploadModalProps) {
                 value={name}
                 onChange={(e) => setName(e.target.value)}
                 className="rounded-xl bg-background"
+              />
+
+              {/* Description — optional user note about this item */}
+              <Textarea
+                placeholder="Description (optional)"
+                value={description}
+                onChange={(e) => setDescription(e.target.value)}
+                className="rounded-xl bg-background text-sm min-h-[60px] resize-none"
+                rows={2}
               />
 
               <Select value={category} onValueChange={(v) => { setCategory(v as ClothingCategory); setSubcategory(''); }}>
