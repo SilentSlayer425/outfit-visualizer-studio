@@ -10,18 +10,45 @@
  *  - Change button color by modifying bg-primary → any Tailwind color token
  */
 import { motion } from 'framer-motion';
-import { Shirt } from 'lucide-react';
+import { Shirt, Moon, Sun } from 'lucide-react';
+import { Link } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import type { GoogleUser } from '@/hooks/useGoogleAuth';
 
 interface LoginPageProps {
   onSignIn: () => void;
   loading: boolean;
+  darkMode: boolean;
+  toggleDarkMode: () => void;
 }
 
-export default function Login({ onSignIn, loading }: LoginPageProps) {
+export default function Login({ onSignIn, loading, darkMode, toggleDarkMode }: LoginPageProps) {
   return (
-    <div className="min-h-screen flex items-center justify-center bg-background p-4">
+    <div className="min-h-screen flex items-center justify-center bg-background p-4 relative">
+      {/* Dark mode toggle - top right */}
+      <button
+        onClick={toggleDarkMode}
+        className="absolute top-4 right-4 p-2.5 rounded-xl bg-card border border-border hover:bg-muted transition-colors"
+        title={darkMode ? 'Switch to light mode' : 'Switch to dark mode'}
+      >
+        {darkMode ? (
+          <Sun className="w-5 h-5 text-foreground" />
+        ) : (
+          <Moon className="w-5 h-5 text-foreground" />
+        )}
+      </button>
+
+      {/* TOS and Privacy links - bottom right */}
+      <div className="absolute bottom-4 right-4 flex gap-3 text-sm">
+        <Link to="/terms" className="text-muted-foreground hover:text-foreground transition-colors">
+          Terms of Service
+        </Link>
+        <span className="text-border">•</span>
+        <Link to="/privacy" className="text-muted-foreground hover:text-foreground transition-colors">
+          Privacy Policy
+        </Link>
+      </div>
+
       <motion.div
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}

@@ -13,6 +13,8 @@ import type { ClothingItem, Outfit } from '@/types/closet';
 interface DriveData {
   items: ClothingItem[];
   outfits: Outfit[];
+  darkMode?: boolean;
+  weatherCity?: string;
 }
 
 async function driveRequest(url: string, token: string, options: RequestInit = {}) {

@@ -11,7 +11,8 @@
  */
 import { useState, useCallback, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Plus, Cloud, CloudOff, LogOut, Trash2, RefreshCw } from 'lucide-react';
+import { Plus, Cloud, CloudOff, LogOut, Trash2, RefreshCw, Moon, Sun, FileText, Shield } from 'lucide-react';
+import { Link } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { ConfirmDialog } from '@/components/ConfirmDialog';
 import { useCloset } from '@/hooks/useCloset';
@@ -40,9 +41,12 @@ const pageVariants = {
 interface IndexProps {
   user: GoogleUser;
   onSignOut: () => void;
+  darkMode: boolean;
+  setDarkMode: (value: boolean) => void;
+  toggleDarkMode: () => void;
 }
 
-export default function Index({ user, onSignOut }: IndexProps) {
+export default function Index({ user, onSignOut, darkMode, setDarkMode, toggleDarkMode }: IndexProps) {
   const { items, outfits, ready, addItem, updateItem, removeItem, saveOutfit, removeOutfit, getItemById, replaceAll } = useCloset();
   const { saveToDrive, loadFromDrive, syncing, lastSync } = useGoogleDrive(user.accessToken);
   const isMobile = useIsMobile();
@@ -64,23 +68,24 @@ export default function Index({ user, onSignOut }: IndexProps) {
         if (data.items?.length || data.outfits?.length) {
           replaceAll(data.items || [], data.outfits || []);
         }
-        if ((data as any).weatherCity) {
-          setWeatherCity((data as any).weatherCity);
+        if (data.weatherCity) {
+          setWeatherCity(data.weatherCity);
+        }
+        if (data.darkMode !== undefined) {
+          setDarkMode(data.darkMode);
         }
       }
     });
-  }, [loadFromDrive, ready, replaceAll]);
+  }, [loadFromDrive, ready, replaceAll, setDarkMode]);
 
   // Auto-save to Drive
   useEffect(() => {
     if (!ready) return;
     const timer = setTimeout(() => {
-      if (items.length > 0 || outfits.length > 0) {
-        saveToDrive({ items, outfits, weatherCity } as any);
-      }
+      saveToDrive({ items, outfits, weatherCity, darkMode } as any);
     }, 2000);
     return () => clearTimeout(timer);
-  }, [items, outfits, weatherCity, saveToDrive, ready]);
+  }, [items, outfits, weatherCity, darkMode, saveToDrive, ready]);
 
   const handleUpload = useCallback((data: { name: string; category: ClothingCategory; subcategory?: string; customTags?: string[]; description?: string; imageData: string }) => {
     addItem(data);
@@ -161,6 +166,18 @@ export default function Index({ user, onSignOut }: IndexProps) {
                 <><CloudOff className="h-3.5 w-3.5" /> Local</>
               )}
             </span>
+            {/* Dark mode toggle */}
+            <button
+              onClick={toggleDarkMode}
+              className="p-2 rounded-lg hover:bg-muted transition-colors"
+              title={darkMode ? 'Switch to light mode' : 'Switch to dark mode'}
+            >
+              {darkMode ? (
+                <Sun className="h-4 w-4 text-foreground" />
+              ) : (
+                <Moon className="h-4 w-4 text-foreground" />
+              )}
+            </button>
             {tab === 'closet' && (
               <Button onClick={() => setUploadOpen(true)} className="gap-2 rounded-xl" size="sm">
                 <Plus className="h-4 w-4" /> Add Item
@@ -183,9 +200,19 @@ export default function Index({ user, onSignOut }: IndexProps) {
                       <p className="text-sm font-medium text-foreground truncate">{user.name}</p>
                       <p className="text-xs text-muted-foreground truncate">{user.email}</p>
                     </div>
+                    <Link to="/terms" onClick={() => setProfileMenuOpen(false)}>
+                      <button className="w-full flex items-center gap-2 px-3 py-2.5 text-sm text-foreground hover:bg-muted transition-colors">
+                        <FileText className="w-4 h-4" /> Terms of Service
+                      </button>
+                    </Link>
+                    <Link to="/privacy" onClick={() => setProfileMenuOpen(false)}>
+                      <button className="w-full flex items-center gap-2 px-3 py-2.5 text-sm text-foreground hover:bg-muted transition-colors">
+                        <Shield className="w-4 h-4" /> Privacy Policy
+                      </button>
+                    </Link>
                     <button
                       onClick={() => { setProfileMenuOpen(false); handleSwitchAccount(); }}
-                      className="w-full flex items-center gap-2 px-3 py-2.5 text-sm text-foreground hover:bg-muted transition-colors"
+                      className="w-full flex items-center gap-2 px-3 py-2.5 text-sm text-foreground hover:bg-muted transition-colors border-t border-border"
                     >
                       <RefreshCw className="w-4 h-4" /> Switch Account
                     </button>
@@ -293,13 +320,6 @@ export default function Index({ user, onSignOut }: IndexProps) {
           )}
         </AnimatePresence>
       </main>
-
-      {/* ── Analytics notice footer ── */}
-      <footer className="fixed bottom-14 left-0 right-0 z-30 text-center py-1.5 bg-background/60 backdrop-blur-sm border-t border-border">
-        <p className="text-[10px] text-muted-foreground/60">
-          We use Vercel Web Analytics to collect anonymous usage data (page views, device type, country). No personal information is tracked.
-        </p>
-      </footer>
 
       <UploadModal open={uploadOpen} onClose={() => setUploadOpen(false)} onUpload={handleUpload} />
       <EditItemModal open={!!editItem} item={editItem} onClose={() => setEditItem(null)} onSave={updateItem} />
