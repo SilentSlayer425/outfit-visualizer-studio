@@ -78,7 +78,7 @@ export default function Home({ user, onSignIn, onSignOut, darkMode, toggleDarkMo
             <div className="w-8 h-8 sm:w-10 sm:h-10 rounded-lg sm:rounded-xl bg-primary/10 flex items-center justify-center group-hover:bg-primary/20 transition-colors">
               <Shirt className="w-4 h-4 sm:w-6 sm:h-6 text-primary" />
             </div>
-            <span className="text-lg sm:text-xl font-heading font-bold text-foreground">Outfit</span>
+            <span className="text-lg sm:text-xl font-heading font-bold text-foreground">Outfit Closet</span>
           </Link>
 
           {/* Navigation */}
