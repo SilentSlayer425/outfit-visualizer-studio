@@ -159,11 +159,11 @@ export default function Index({ user, onSignOut, darkMode, setDarkMode, toggleDa
           <div className="flex items-center gap-2">
             <span className="flex items-center gap-1 text-xs text-muted-foreground">
               {syncing ? (
-                <><Cloud className="h-3.5 w-3.5 animate-pulse" /> Syncing...</>
+                <><Cloud className="h-3.5 w-3.5 animate-pulse" /> <span className="hidden sm:inline">Syncing...</span></>
               ) : lastSync ? (
-                <><Cloud className="h-3.5 w-3.5 text-primary" /> Synced</>
+                <><Cloud className="h-3.5 w-3.5 text-primary" /> <span className="hidden sm:inline">Synced</span></>
               ) : (
-                <><CloudOff className="h-3.5 w-3.5" /> Local</>
+                <><CloudOff className="h-3.5 w-3.5" /> <span className="hidden sm:inline">Local</span></>
               )}
             </span>
             {/* Dark mode toggle */}
@@ -180,7 +180,7 @@ export default function Index({ user, onSignOut, darkMode, setDarkMode, toggleDa
             </button>
             {tab === 'closet' && (
               <Button onClick={() => setUploadOpen(true)} className="gap-2 rounded-xl" size="sm">
-                <Plus className="h-4 w-4" /> Add Item
+                <Plus className="h-4 w-4" /> Add<span className="hidden sm:inline"> Item</span>
               </Button>
             )}
             {/* Profile avatar — opens dropdown menu */}
@@ -320,6 +320,13 @@ export default function Index({ user, onSignOut, darkMode, setDarkMode, toggleDa
           )}
         </AnimatePresence>
       </main>
+
+      {/* ── Analytics notice footer ── */}
+      <footer className="fixed bottom-14 left-0 right-0 z-30 text-center py-1.5 bg-background/60 backdrop-blur-sm border-t border-border">
+        <p className="text-[10px] text-muted-foreground/60">
+          We use Vercel Web Analytics to collect anonymous usage data (page views, device type, country). No personal information is tracked.
+        </p>
+      </footer>
 
       <UploadModal open={uploadOpen} onClose={() => setUploadOpen(false)} onUpload={handleUpload} />
       <EditItemModal open={!!editItem} item={editItem} onClose={() => setEditItem(null)} onSave={updateItem} />

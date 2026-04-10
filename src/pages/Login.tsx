@@ -36,27 +36,27 @@ export default function Login({ onSignIn, loading, darkMode, toggleDarkMode, use
   }, [user, navigate]);
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-background p-4 relative">
+    <div className="min-h-screen flex items-center justify-center bg-background p-3 sm:p-4 relative">
       {/* Dark mode toggle - top right */}
       <button
         onClick={toggleDarkMode}
-        className="absolute top-4 right-4 p-2.5 rounded-xl bg-card border border-border hover:bg-muted transition-colors"
+        className="absolute top-3 right-3 sm:top-4 sm:right-4 p-2 sm:p-2.5 rounded-lg sm:rounded-xl bg-card border border-border hover:bg-muted transition-colors"
         title={darkMode ? 'Switch to light mode' : 'Switch to dark mode'}
       >
         {darkMode ? (
-          <Sun className="w-5 h-5 text-foreground" />
+          <Sun className="w-4 h-4 sm:w-5 sm:h-5 text-foreground" />
         ) : (
-          <Moon className="w-5 h-5 text-foreground" />
+          <Moon className="w-4 h-4 sm:w-5 sm:h-5 text-foreground" />
         )}
       </button>
 
       {/* TOS and Privacy links - bottom right */}
-      <div className="absolute bottom-4 right-4 flex gap-3 text-sm">
-        <Link to="/terms" className="text-muted-foreground hover:text-foreground transition-colors">
+      <div className="absolute bottom-3 right-3 sm:bottom-4 sm:right-4 flex flex-col sm:flex-row gap-2 sm:gap-3 text-xs sm:text-sm">
+        <Link to="/terms" className="text-muted-foreground hover:text-foreground transition-colors text-right">
           Terms of Service
         </Link>
-        <span className="text-border">•</span>
-        <Link to="/privacy" className="text-muted-foreground hover:text-foreground transition-colors">
+        <span className="text-border hidden sm:inline">•</span>
+        <Link to="/privacy" className="text-muted-foreground hover:text-foreground transition-colors text-right">
           Privacy Policy
         </Link>
       </div>
@@ -65,20 +65,20 @@ export default function Login({ onSignIn, loading, darkMode, toggleDarkMode, use
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.5 }}
-        className="w-full max-w-sm text-center"
+        className="w-full max-w-sm text-center px-4"
       >
         {/* App icon — change w-16/h-16 to resize, change text-primary for color */}
-        <div className="mx-auto w-16 h-16 rounded-2xl bg-primary/10 flex items-center justify-center mb-6">
-          <Shirt className="w-8 h-8 text-primary" />
+        <div className="mx-auto w-14 h-14 sm:w-16 sm:h-16 rounded-xl sm:rounded-2xl bg-primary/10 flex items-center justify-center mb-5 sm:mb-6">
+          <Shirt className="w-7 h-7 sm:w-8 sm:h-8 text-primary" />
         </div>
 
         {/* App title — uses heading font from index.css (Playfair Display) */}
-        <h1 className="text-3xl font-heading font-bold text-foreground mb-2">
+        <h1 className="text-2xl sm:text-3xl font-heading font-bold text-foreground mb-2">
           Outfit
         </h1>
 
         {/* Subtitle — change text-muted-foreground for different text color */}
-        <p className="text-muted-foreground mb-8">
+        <p className="text-sm sm:text-base text-muted-foreground mb-6 sm:mb-8">
           Your personal closet, organized.
         </p>
 
@@ -86,10 +86,10 @@ export default function Login({ onSignIn, loading, darkMode, toggleDarkMode, use
         <Button
           onClick={onSignIn}
           disabled={loading}
-          className="w-full rounded-xl py-6 text-base font-semibold gap-3"
+          className="w-full rounded-xl py-5 sm:py-6 text-sm sm:text-base font-semibold gap-2 sm:gap-3"
         >
           {/* Google icon SVG — change w-5/h-5 to resize */}
-          <svg className="w-5 h-5" viewBox="0 0 24 24">
+          <svg className="w-4 h-4 sm:w-5 sm:h-5" viewBox="0 0 24 24">
             <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92a5.06 5.06 0 0 1-2.2 3.32v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.1z" />
             <path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" />
             <path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z" />
