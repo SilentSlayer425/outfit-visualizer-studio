@@ -83,10 +83,17 @@ export default function TermsOfService() {
             </p>
           </section>
 
-          <section>
-            <h2 className="text-2xl font-heading font-semibold mb-3">9. Contact Information</h2>
+                    <section>
+            <h2 className="text-2xl font-heading font-semibold mb-3">9. Warranty</h2>
             <p className="text-muted-foreground leading-relaxed">
-              If you have any questions about these Terms, please contact us through the Support tab in the application.
+              We do not guarantee the accuracy, reliability, or availability of the Service. The Service is provided without warranties of any kind, either express or implied. You use the Service at your own risk.
+            </p>
+          </section>
+
+          <section>
+            <h2 className="text-2xl font-heading font-semibold mb-3">10. Contact Information</h2>
+            <p className="text-muted-foreground leading-relaxed">
+              If you have any questions about these Terms, please contact us through the Support tab in the application. Support requests do not constitute legal notices.
             </p>
           </section>
         </div>
