@@ -9,6 +9,8 @@
  *  - Adjust border-radius via the rounded-* classes (e.g., rounded-3xl → more round)
  *  - Change button color by modifying bg-primary → any Tailwind color token
  */
+import { useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { Shirt, Moon, Sun } from 'lucide-react';
 import { Link } from 'react-router-dom';
@@ -20,9 +22,19 @@ interface LoginPageProps {
   loading: boolean;
   darkMode: boolean;
   toggleDarkMode: () => void;
+  user?: GoogleUser | null;
 }
 
-export default function Login({ onSignIn, loading, darkMode, toggleDarkMode }: LoginPageProps) {
+export default function Login({ onSignIn, loading, darkMode, toggleDarkMode, user }: LoginPageProps) {
+  const navigate = useNavigate();
+
+  // Redirect to app if already logged in
+  useEffect(() => {
+    if (user) {
+      navigate('/app');
+    }
+  }, [user, navigate]);
+
   return (
     <div className="min-h-screen flex items-center justify-center bg-background p-4 relative">
       {/* Dark mode toggle - top right */}
