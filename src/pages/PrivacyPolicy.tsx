@@ -24,7 +24,7 @@ export default function PrivacyPolicy() {
           <section>
             <h2 className="text-2xl font-heading font-semibold mb-3">1. Introduction</h2>
             <p className="text-muted-foreground leading-relaxed">
-              We respect your privacy and are committed to protecting your personal data. This privacy policy explains how we handle your information when you use our digital closet application ("Service").
+              We respect your privacy and are committed to protecting your personal data. This privacy policy explains how we handle your information when you use our digital closet application (Outfit Closet).
             </p>
           </section>
 
@@ -38,7 +38,7 @@ export default function PrivacyPolicy() {
               <li><strong>Clothing Data:</strong> Images and descriptions of clothing items you upload</li>
               <li><strong>Outfit Data:</strong> Saved outfits and combinations you create</li>
               <li><strong>Preferences:</strong> App settings like dark mode preference and weather location</li>
-              <li><strong>Usage Analytics:</strong> =Aggregated, non-identifiable usage analytics via Vercel Analytics</li>
+              <li><strong>Usage Analytics:</strong> Aggregated, non-identifiable usage analytics via Vercel Analytics</li>
             </ul>
           </section>
 
@@ -75,12 +75,12 @@ export default function PrivacyPolicy() {
             <h2 className="text-2xl font-heading font-semibold mb-3">6. Data Sharing and Third Parties</h2>
             <p className="text-muted-foreground leading-relaxed">
               We use trusted third-party service providers (“subprocessors”) to operate the Service:
-
-              - Google OAuth and Google Drive API: authentication and data storage in your personal Google Drive
-              - Vercel Analytics: aggregated, non-identifiable usage analytics
-
-              These providers may process limited data necessary for their functionality but do not receive access to your full closet data.
             </p>
+            <ul className="list-disc list-inside text-muted-foreground space-y-2 ml-4">
+              <li><strong>Google OAuth and Google Drive API:</strong> Authentication and data storage in your personal Google Drive</li>
+              <li><strong>Vercel Analytics:</strong> Aggregated, non-identifiable usage analytics</li>
+              <li><strong>These providers may process limited data necessary for their functionality but do not receive access to your full closet data.</strong></li>
+            </ul>
           </section>
 
           <section>
