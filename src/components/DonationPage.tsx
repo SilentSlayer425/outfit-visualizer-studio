@@ -8,14 +8,35 @@
  *  - Card background: change bg-card
  *  - Button color: uses primary token from design system
  */
-import { Heart, ExternalLink } from 'lucide-react';
+import { Heart, ExternalLink, ArrowLeft } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 
 const THRONE_URL = 'https://throne.com/silentslayer425';
 
 export function DonationPage() {
+  const navigate = useNavigate();
+
+  const handleBack = () => {
+    // Go back if there's history, otherwise go to home
+    if (window.history.length > 1) {
+      navigate(-1);
+    } else {
+      navigate('/');
+    }
+  };
+
   return (
-    <div className="flex flex-col items-center justify-center py-20 px-4 text-center">
+    <div className="flex flex-col items-center justify-center py-20 px-4 text-center relative">
+      {/* Back button */}
+      <Button
+        variant="ghost"
+        onClick={handleBack}
+        className="absolute top-4 left-4 gap-2"
+      >
+        <ArrowLeft className="h-4 w-4" /> Back
+      </Button>
+
       <Heart className="w-16 h-16 text-primary mb-6 opacity-80" />
       <h2 className="text-2xl font-heading font-bold text-foreground mb-3">
         Support the Project

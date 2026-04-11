@@ -7,9 +7,9 @@
  *  - Background blur: change backdrop-blur-md
  *  - Background opacity: change bg-card/90
  */
-import { Shirt, Palette, Heart, Gift } from 'lucide-react';
+import { Shirt, Palette, Heart, Gift, Home } from 'lucide-react';
 
-export type Tab = 'closet' | 'builder' | 'outfits' | 'donate';
+export type Tab = 'closet' | 'builder' | 'outfits' | 'donate' | 'home';
 
 interface AppNavProps {
   active: Tab;
@@ -22,6 +22,7 @@ export function AppNav({ active, onChange }: AppNavProps) {
     { id: 'builder', label: 'Build Outfit', icon: <Palette className="w-5 h-5" /> },
     { id: 'outfits', label: 'Saved', icon: <Heart className="w-5 h-5" /> },
     { id: 'donate', label: 'Support', icon: <Gift className="w-5 h-5" /> },
+    { id: 'home', label: 'Home', icon: <Home className="w-5 h-5" /> },
   ];
 
   return (

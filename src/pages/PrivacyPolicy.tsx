@@ -3,19 +3,34 @@
  * 
  * Accessible without authentication at /privacy
  */
-import { Link } from 'react-router-dom';
+import { useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { ArrowLeft } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 
 export default function PrivacyPolicy() {
+  const navigate = useNavigate();
+
+  // Scroll to top when component mounts
+  useEffect(() => {
+    window.scrollTo(0, 0);
+  }, []);
+
+const handleBack = () => {
+    // Go back if there's history, otherwise go to home
+    if (window.history.length > 1) {
+      navigate(-1);
+    } else {
+      navigate('/');
+    }
+  };
+
   return (
     <div className="min-h-screen bg-background">
       <div className="max-w-3xl mx-auto px-4 sm:px-6 md:px-8 py-6 sm:py-8">
-        <Link to="/">
-          <Button variant="ghost" className="mb-4 sm:mb-6 gap-2 text-sm sm:text-base">
-            <ArrowLeft className="h-3 w-3 sm:h-4 sm:w-4" /> Back
-          </Button>
-        </Link>
+        <Button variant="ghost" onClick={handleBack} className="mb-4 sm:mb-6 gap-2 text-sm sm:text-base">
+          <ArrowLeft className="h-3 w-3 sm:h-4 sm:w-4" /> Back
+        </Button>
 
         <h1 className="text-2xl sm:text-3xl md:text-4xl font-heading font-bold text-foreground mb-2">Privacy Policy</h1>
         <p className="text-xs sm:text-sm text-muted-foreground mb-6 sm:mb-8">Last updated: {new Date().toLocaleDateString()}</p>

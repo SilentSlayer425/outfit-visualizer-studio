@@ -1,16 +1,21 @@
-<!doctype html>
+<!DOCTYPE html>
 <html lang="en">
   <head>
     <meta charset="UTF-8" />
+    <link rel="icon" type="image/svg+xml" href="/vite.svg" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Outfit Closet</title>
-    <meta name="description" content="Sais Project" />
-    <meta name="author" content="Outfit" />
-
-    <meta property="og:title" content="Outfit Closet" />
-    <meta property="og:type" content="website" />
+    <title>Outfit - Your Personal Closet</title>
+    <script>
+      // Handle SPA routing for direct URL access
+      (function() {
+        const path = window.location.pathname;
+        if (path !== '/' && !path.includes('.')) {
+          // Store the intended path
+          sessionStorage.setItem('redirectPath', path + window.location.search);
+        }
+      })();
+    </script>
   </head>
-
   <body>
     <div id="root"></div>
     <script type="module" src="/src/main.tsx"></script>

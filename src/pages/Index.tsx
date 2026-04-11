@@ -12,7 +12,7 @@
 import { useState, useCallback, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Plus, Cloud, CloudOff, LogOut, Trash2, RefreshCw, Moon, Sun, FileText, Shield } from 'lucide-react';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { ConfirmDialog } from '@/components/ConfirmDialog';
 import { useCloset } from '@/hooks/useCloset';
@@ -50,6 +50,7 @@ export default function Index({ user, onSignOut, darkMode, setDarkMode, toggleDa
   const { items, outfits, ready, addItem, updateItem, removeItem, saveOutfit, removeOutfit, getItemById, replaceAll } = useCloset();
   const { saveToDrive, loadFromDrive, syncing, lastSync } = useGoogleDrive(user.accessToken);
   const isMobile = useIsMobile();
+  const navigate = useNavigate();
   const [tab, setTab] = useState<Tab>('closet');
   const [uploadOpen, setUploadOpen] = useState(false);
   const [editItem, setEditItem] = useState<ClothingItem | null>(null);
@@ -59,6 +60,15 @@ export default function Index({ user, onSignOut, darkMode, setDarkMode, toggleDa
   const [weatherCity, setWeatherCity] = useState<string | null>(null);
   const [profileMenuOpen, setProfileMenuOpen] = useState(false);
   const [confirmDeleteAll, setConfirmDeleteAll] = useState(false);
+
+  // Handle tab navigation
+  const handleTabChange = (newTab: Tab) => {
+    if (newTab === 'home') {
+      navigate('/');
+    } else {
+      setTab(newTab);
+    }
+  };
 
   // Load from Drive on mount
   useEffect(() => {
@@ -137,6 +147,7 @@ export default function Index({ user, onSignOut, darkMode, setDarkMode, toggleDa
   }, [onSignOut]);
 
   const headerTitle: Record<Tab, string> = {
+    home: 'Home',
     closet: 'My Closet',
     builder: 'Build Outfit',
     outfits: 'Saved Outfits',
@@ -321,13 +332,6 @@ export default function Index({ user, onSignOut, darkMode, setDarkMode, toggleDa
         </AnimatePresence>
       </main>
 
-      {/* ── Analytics notice footer ── */}
-      <footer className="fixed bottom-14 left-0 right-0 z-30 text-center py-1.5 bg-background/60 backdrop-blur-sm border-t border-border">
-        <p className="text-[10px] text-muted-foreground/60">
-          We use Vercel Web Analytics to collect anonymous usage data (page views, device type, country). No personal information is tracked.
-        </p>
-      </footer>
-
       <UploadModal open={uploadOpen} onClose={() => setUploadOpen(false)} onUpload={handleUpload} />
       <EditItemModal open={!!editItem} item={editItem} onClose={() => setEditItem(null)} onSave={updateItem} />
       <ItemDetailModal
@@ -344,7 +348,7 @@ export default function Index({ user, onSignOut, darkMode, setDarkMode, toggleDa
         onConfirm={handleDeleteAllData}
         onCancel={() => setConfirmDeleteAll(false)}
       />
-      <AppNav active={tab} onChange={setTab} />
+      <AppNav active={tab} onChange={handleTabChange} />
     </div>
   );
 }

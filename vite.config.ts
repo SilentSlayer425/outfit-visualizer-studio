@@ -17,6 +17,19 @@ export default defineConfig(({ mode }) => ({
     },
     allowedHosts: true,  // Allow all hosts in development
   },
+  preview: {
+    port: 8080,
+    strictPort: true,
+    host: "0.0.0.0",
+  },
+  build: {
+    outDir: 'dist',
+    rollupOptions: {
+      output: {
+        manualChunks: undefined,
+      },
+    },
+  },
   plugins: [react(), mode === "development" && componentTagger()].filter(Boolean),
   resolve: {
     alias: {
