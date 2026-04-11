@@ -321,7 +321,7 @@ export function WeatherWidget({ savedCity, savedLat, savedLon, onCityChange }: W
         <div className="px-4 pb-4 space-y-3">
           <div className="flex gap-2">
             <Input
-              placeholder="Search city... (e.g. los angeles california)"
+              placeholder="Search city... (e.g. 'Los Angeles California', or just 'Los Angeles', 'Paris', etc.)"
               value={query}
               onChange={(e) => setQuery(e.target.value)}
               onKeyDown={(e) => { if (e.key === 'Enter') { e.preventDefault(); searchCity(); } }}
