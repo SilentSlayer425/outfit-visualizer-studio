@@ -1,10 +1,1 @@
-# robots.txt for outfitcanvas.com
-# Allows all search engines and AI crawlers to index the site
-
-User-agent: *
-Allow: /
-
-# Block the delete page from being indexed — no reason for it to appear in search
-Disallow: /delete
-
 Sitemap: https://outfitcanvas.com/sitemap.xml
